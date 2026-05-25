@@ -8,9 +8,11 @@ later issues will fill in with concrete handlers.
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from routers.dashboard import router as dashboard_router
 from routers.exercise import router as exercise_router
 from routers.food import router as food_router
 from routers.goals import router as goals_router
+from routers.meals import router as meals_router
 from routers.water import router as water_router
 from routers.weight import router as weight_router
 
@@ -25,9 +27,6 @@ app.add_middleware(
 )
 
 api_router = APIRouter(prefix="/api")
-
-meals_router = APIRouter(prefix="/meals", tags=["meals"])
-dashboard_router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 for sub in (
     meals_router,
