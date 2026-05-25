@@ -118,6 +118,116 @@ describe('Nutrition page', () => {
     })
   })
 
+  it('shows a "Saved" badge on Custom Food results and pre-fills macros editably', async () => {
+    const calls: { url: string; method: string; body: string | null }[] = []
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      const method = init?.method ?? 'GET'
+      const body = init?.body ? String(init.body) : null
+      calls.push({ url, method, body })
+
+      if (url.startsWith('/api/meals') && method === 'POST') {
+        const parsed = JSON.parse(body!)
+        return jsonResponse(
+          makeMeal({
+            id: 77,
+            food_name: parsed.food_name,
+            meal_type: parsed.meal_type,
+            quantity: parsed.quantity,
+            unit: parsed.unit,
+            calories: parsed.calories,
+            protein_g: parsed.protein_g,
+            carbs_g: parsed.carbs_g,
+            fat_g: parsed.fat_g,
+            fiber_g: parsed.fiber_g,
+            food_id: parsed.food_id ?? null,
+          }),
+          201,
+        )
+      }
+      if (url.startsWith('/api/meals')) {
+        return jsonResponse(emptyMeals())
+      }
+      if (url.startsWith('/api/food/search')) {
+        return jsonResponse([
+          {
+            id: 7,
+            off_id: null,
+            name: "Mom's Lasagna",
+            brand: 'Home',
+            serving_g: 200,
+            calories: 175,
+            protein_g: 9,
+            carbs_g: 18,
+            fat_g: 7.5,
+            fiber_g: 1.5,
+            source: 'local',
+          },
+          {
+            id: null,
+            off_id: '12345',
+            name: 'Lasagna, frozen',
+            brand: 'BrandX',
+            serving_g: 250,
+            calories: 220,
+            protein_g: 8,
+            carbs_g: 22,
+            fat_g: 10,
+            fiber_g: 1,
+            source: 'off',
+          },
+        ])
+      }
+      throw new Error(`Unhandled fetch: ${url}`)
+    })
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    const user = userEvent.setup()
+    render(<Nutrition />)
+
+    await screen.findByTestId('meal-group-breakfast')
+
+    await user.click(screen.getByRole('button', { name: /add food/i }))
+    const dialog = await screen.findByRole('dialog')
+
+    const searchInput = within(dialog).getByLabelText(/search/i)
+    await user.type(searchInput, 'lasagna')
+    await user.click(within(dialog).getByRole('button', { name: /^search$/i }))
+
+    // The Custom Food (source=local) shows a "Saved" badge; the OFF
+    // result does not.
+    const customRow = (await within(dialog).findByText("Mom's Lasagna")).closest('li')!
+    expect(within(customRow).getByText(/saved/i)).toBeInTheDocument()
+
+    const offRow = within(dialog).getByText('Lasagna, frozen').closest('li')!
+    expect(within(offRow).queryByText(/saved/i)).not.toBeInTheDocument()
+
+    // Picking the Custom Food pre-fills macros (scaled 1:1 because
+    // default quantity is 100g) and they are editable.
+    await user.click(within(dialog).getByRole('button', { name: /select mom's lasagna/i }))
+
+    const calInput = within(dialog).getByLabelText(/calories/i) as HTMLInputElement
+    expect(calInput.value).toBe('175')
+    const proteinInput = within(dialog).getByLabelText(/protein/i) as HTMLInputElement
+    expect(proteinInput.value).toBe('9')
+
+    // User can still edit before confirming.
+    await user.clear(calInput)
+    await user.type(calInput, '180')
+    await user.click(within(dialog).getByRole('button', { name: /confirm/i }))
+
+    await waitFor(() => {
+      const group = screen.getByTestId('meal-group-breakfast')
+      expect(within(group).getByText("Mom's Lasagna")).toBeInTheDocument()
+    })
+
+    const postCall = calls.find((c) => c.url === '/api/meals' && c.method === 'POST')!
+    const postBody = JSON.parse(postCall.body!)
+    expect(postBody.food_name).toBe("Mom's Lasagna")
+    expect(postBody.calories).toBe(180)
+    expect(postBody.food_id).toBe(7)
+  })
+
   it('food search modal: search → pick → quantity → editable macros → confirm', async () => {
     const calls: { url: string; method: string; body: string | null }[] = []
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {

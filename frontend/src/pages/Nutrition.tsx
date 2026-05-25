@@ -180,13 +180,23 @@ function AddFoodModal({ onClose, onCreated }: AddFoodModalProps) {
                   className="flex items-center justify-between px-3 py-2"
                 >
                   <div>
-                    <p className="text-sm font-medium">{result.name}</p>
+                    <p className="flex items-center gap-2 text-sm font-medium">
+                      <span>{result.name}</span>
+                      {result.source === 'local' && (
+                        <span
+                          className="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700"
+                          aria-label="Saved custom food"
+                        >
+                          Saved
+                        </span>
+                      )}
+                    </p>
                     <p className="text-xs text-gray-500">
                       {result.brand ? `${result.brand} · ` : ''}
                       {result.calories ?? '?'} kcal / 100 g
-                      <span className="ml-2 uppercase tracking-wide">
-                        {result.source}
-                      </span>
+                      {result.source === 'off' && (
+                        <span className="ml-2 uppercase tracking-wide">off</span>
+                      )}
                     </p>
                   </div>
                   <button
