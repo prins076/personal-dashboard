@@ -83,8 +83,39 @@ def create_water(payload: WaterCreate) -> WaterCreateResponse:
     )
 
 
-@router.get("", response_model=WaterDayResponse)
-def list_water(date: Optional[_date] = Query(default=None)) -> WaterDayResponse:
+@router.get("")
+def list_water(
+    date: Optional[_date] = Query(default=None),
+    start: Optional[_date] = Query(default=None),
+    end: Optional[_date] = Query(default=None),
+):
+    if start is not None or end is not None:
+        clauses: list[str] = []
+        params: list[str] = []
+        if start is not None:
+            clauses.append("date >= ?")
+            params.append(start.isoformat())
+        if end is not None:
+            clauses.append("date <= ?")
+            params.append(end.isoformat())
+        where = "WHERE " + " AND ".join(clauses)
+        with get_connection() as conn:
+            rows = conn.execute(
+                f"SELECT id, date, amount_ml, notes, logged_at FROM water_entries "
+                f"{where} ORDER BY date DESC, logged_at DESC, id DESC",
+                params,
+            ).fetchall()
+        return [
+            WaterEntry(
+                id=r["id"],
+                date=r["date"],
+                amount_ml=r["amount_ml"],
+                notes=r["notes"],
+                logged_at=r["logged_at"],
+            ).model_dump()
+            for r in rows
+        ]
+
     day = (date or _date.today()).isoformat()
     with get_connection() as conn:
         rows = conn.execute(

@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date as _date
 from typing import Literal, Optional
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel, ConfigDict, Field
 
 from db import get_connection
@@ -114,12 +114,35 @@ def create_exercise(payload: ExerciseCreate) -> ExerciseEntry:
 
 
 @router.get("", response_model=list[ExerciseEntry])
-def list_exercise(date: _date) -> list[ExerciseEntry]:
+def list_exercise(
+    date: Optional[_date] = Query(default=None),
+    start: Optional[_date] = Query(default=None),
+    end: Optional[_date] = Query(default=None),
+) -> list[ExerciseEntry]:
+    if start is not None or end is not None:
+        clauses: list[str] = []
+        params: list[str] = []
+        if start is not None:
+            clauses.append("date >= ?")
+            params.append(start.isoformat())
+        if end is not None:
+            clauses.append("date <= ?")
+            params.append(end.isoformat())
+        where = "WHERE " + " AND ".join(clauses)
+        with get_connection() as conn:
+            rows = conn.execute(
+                f"SELECT {', '.join(COLUMNS)} FROM exercise_entries "
+                f"{where} ORDER BY date DESC, logged_at DESC, id DESC",
+                params,
+            ).fetchall()
+        return [_row_to_entry(r) for r in rows]
+
+    day = (date or _date.today()).isoformat()
     with get_connection() as conn:
         rows = conn.execute(
             f"SELECT {', '.join(COLUMNS)} FROM exercise_entries "
             "WHERE date = ? ORDER BY logged_at ASC, id ASC",
-            (date.isoformat(),),
+            (day,),
         ).fetchall()
     return [_row_to_entry(r) for r in rows]
 

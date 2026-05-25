@@ -68,14 +68,34 @@ def create_weight(payload: WeightCreate):
 
 
 @router.get("")
-def list_weight(days: int = 30):
-    with get_connection() as conn:
-        rows = conn.execute(
-            "SELECT * FROM weight_entries "
-            "WHERE date >= date('now', ?) "
-            "ORDER BY date ASC",
-            (f"-{days} days",),
-        ).fetchall()
+def list_weight(
+    days: int = 30,
+    start: Optional[str] = None,
+    end: Optional[str] = None,
+):
+    if start is not None or end is not None:
+        clauses: list[str] = []
+        params: list[str] = []
+        if start is not None:
+            clauses.append("date >= ?")
+            params.append(start)
+        if end is not None:
+            clauses.append("date <= ?")
+            params.append(end)
+        where = "WHERE " + " AND ".join(clauses)
+        with get_connection() as conn:
+            rows = conn.execute(
+                f"SELECT * FROM weight_entries {where} ORDER BY date ASC",
+                params,
+            ).fetchall()
+    else:
+        with get_connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM weight_entries "
+                "WHERE date >= date('now', ?) "
+                "ORDER BY date ASC",
+                (f"-{days} days",),
+            ).fetchall()
 
     entries = []
     previous: Optional[float] = None
@@ -86,6 +106,9 @@ def list_weight(days: int = 30):
         )
         previous = row["weight_kg"]
         entries.append(entry)
+
+    if start is not None or end is not None:
+        entries.reverse()
 
     return entries
 
