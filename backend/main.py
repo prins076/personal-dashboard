@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from routers.food import router as food_router
 from routers.goals import router as goals_router
 from routers.water import router as water_router
+from routers.weight import router as weight_router
 
 app = FastAPI(title="Fitness Tracker API", version="0.1.0")
 
@@ -25,18 +26,17 @@ app.add_middleware(
 api_router = APIRouter(prefix="/api")
 
 meals_router = APIRouter(prefix="/meals", tags=["meals"])
-weight_router = APIRouter(prefix="/weight", tags=["weight"])
 exercise_router = APIRouter(prefix="/exercise", tags=["exercise"])
 dashboard_router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 for sub in (
     meals_router,
-    weight_router,
     exercise_router,
     dashboard_router,
     food_router,
     goals_router,
     water_router,
+    weight_router,
 ):
     api_router.include_router(sub)
 
