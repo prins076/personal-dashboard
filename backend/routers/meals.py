@@ -145,12 +145,34 @@ def create_meal(payload: MealCreate) -> MealEntry:
     return _row_to_entry(row)
 
 
-@router.get("", response_model=dict[str, list[MealEntry]])
-def list_meals(date: Optional[_date] = Query(default=None)) -> dict[str, list[MealEntry]]:
+@router.get("")
+def list_meals(
+    date: Optional[_date] = Query(default=None),
+    start: Optional[_date] = Query(default=None),
+    end: Optional[_date] = Query(default=None),
+):
+    if start is not None or end is not None:
+        clauses: list[str] = []
+        params: list[str] = []
+        if start is not None:
+            clauses.append("date >= ?")
+            params.append(start.isoformat())
+        if end is not None:
+            clauses.append("date <= ?")
+            params.append(end.isoformat())
+        where = "WHERE " + " AND ".join(clauses)
+        with get_connection() as conn:
+            rows = conn.execute(
+                f"SELECT {', '.join(COLUMNS)} FROM meal_entries "
+                f"{where} ORDER BY date DESC, logged_at DESC, id DESC",
+                params,
+            ).fetchall()
+        return [_row_to_entry(r).model_dump() for r in rows]
+
     day = (date or _date.today()).isoformat()
     with get_connection() as conn:
         entries = _select_for_date(conn, day)
-    return _group_by_meal_type(entries)
+    return {mt: [e.model_dump() for e in lst] for mt, lst in _group_by_meal_type(entries).items()}
 
 
 @router.delete("/{entry_id}", status_code=status.HTTP_204_NO_CONTENT)
