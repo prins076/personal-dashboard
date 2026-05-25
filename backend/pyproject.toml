@@ -1,0 +1,17 @@
+[project]
+name = "fitness-backend"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.136.3",
+    "httpx>=0.28.1",
+    "mcp>=1.27.1",
+    "pydantic>=2.13.4",
+    "uvicorn>=0.48.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.0.3",
+]

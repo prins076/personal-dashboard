@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "fitness": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--project",
+        "/home/jelle/projects/personal-dashboard/backend",
+        "python",
+        "-m",
+        "fitness.mcp_server"
+      ],
+      "env": {
+        "FITNESS_DB_PATH": "/home/jelle/projects/personal-dashboard/backend/data/fitness.db"
+      }
+    }
+  }
+}

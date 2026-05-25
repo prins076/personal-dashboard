@@ -35,3 +35,12 @@ Thumbs.db
 .cache/
 .tmp/
 tmp/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Local DB
+backend/data/
