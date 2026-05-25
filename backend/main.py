@@ -8,6 +8,8 @@ later issues will fill in with concrete handlers.
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from routers.goals import router as goals_router
+
 app = FastAPI(title="Fitness Tracker API", version="0.1.0")
 
 app.add_middleware(
@@ -26,7 +28,6 @@ weight_router = APIRouter(prefix="/weight", tags=["weight"])
 exercise_router = APIRouter(prefix="/exercise", tags=["exercise"])
 dashboard_router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 food_search_router = APIRouter(prefix="/food", tags=["food"])
-goals_router = APIRouter(prefix="/goals", tags=["goals"])
 
 for sub in (
     meals_router,
