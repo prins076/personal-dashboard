@@ -4,6 +4,8 @@
       "command": "uv",
       "args": [
         "run",
+        "--directory",
+        "/home/jelle/projects/personal-dashboard/backend",
         "--project",
         "/home/jelle/projects/personal-dashboard/backend",
         "python",
