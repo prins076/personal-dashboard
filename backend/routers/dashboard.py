@@ -3,11 +3,15 @@
 `GET /api/dashboard/today` is the single source of truth for the home
 Dashboard. In addition to the meal totals + goals it returns water,
 weight and exercise summaries so the page loads from one request.
+
+`GET /api/dashboard/week` returns calorie/macro totals for each day of the
+current calendar week (Monday–Sunday). Future days are null per the PRD
+invariant; past days with no meals are 0.
 """
 
 from __future__ import annotations
 
-from datetime import date as _date
+from datetime import date as _date, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Query
@@ -19,6 +23,7 @@ from .meals import MEAL_TYPES, _group_by_meal_type, _select_for_date
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 _MACRO_KEYS = ("calories", "protein_g", "carbs_g", "fat_g", "fiber_g")
+_WEEK_MACRO_KEYS = ("calories", "protein_g", "carbs_g", "fat_g")
 
 _EXERCISE_COLUMNS = (
     "id",
@@ -122,3 +127,44 @@ def dashboard_today(date: Optional[_date] = Query(default=None)) -> dict:
         "weight": weight,
         "exercise": exercise,
     }
+
+
+@router.get("/week")
+def dashboard_week() -> list[dict]:
+    today = _date.today()
+    monday = today - timedelta(days=today.weekday())
+    days = [monday + timedelta(days=i) for i in range(7)]
+
+    with get_connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT date,
+                   SUM(calories) AS calories,
+                   SUM(protein_g) AS protein_g,
+                   SUM(carbs_g) AS carbs_g,
+                   SUM(fat_g) AS fat_g
+              FROM meal_entries
+             WHERE date BETWEEN ? AND ?
+             GROUP BY date
+            """,
+            (monday.isoformat(), days[-1].isoformat()),
+        ).fetchall()
+
+    totals_by_date = {row["date"]: row for row in rows}
+    result: list[dict] = []
+    for day in days:
+        iso = day.isoformat()
+        if day > today:
+            entry = {"date": iso}
+            for key in _WEEK_MACRO_KEYS:
+                entry[key] = None
+            result.append(entry)
+            continue
+
+        row = totals_by_date.get(iso)
+        entry = {"date": iso}
+        for key in _WEEK_MACRO_KEYS:
+            value = row[key] if row is not None else None
+            entry[key] = value if value is not None else 0
+        result.append(entry)
+    return result

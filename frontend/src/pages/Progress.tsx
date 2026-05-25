@@ -1,14 +1,149 @@
 import { useEffect, useState } from 'react'
 import {
+  Bar,
+  BarChart,
   CartesianGrid,
+  Cell,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts'
 import { apiClient } from '../api/client'
+
+const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const
+
+type WeekDay = {
+  date: string
+  calories: number | null
+  protein_g: number | null
+  carbs_g: number | null
+  fat_g: number | null
+}
+
+type WeekBarDatum = {
+  date: string
+  label: (typeof DAY_LABELS)[number]
+  calories: number | null
+  is_future: boolean
+}
+
+function toBarData(week: WeekDay[]): WeekBarDatum[] {
+  return week.slice(0, 7).map((entry, i) => ({
+    date: entry.date,
+    label: DAY_LABELS[i],
+    calories: entry.calories,
+    is_future: entry.calories === null,
+  }))
+}
+
+type WeekTooltipPayload = {
+  payload: WeekBarDatum
+  value: number | null
+}
+
+function CalorieWeekTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean
+  payload?: WeekTooltipPayload[]
+}) {
+  if (!active || !payload || payload.length === 0) return null
+  const datum = payload[0].payload
+  if (datum.is_future) return null
+  return (
+    <div className="rounded border border-gray-300 bg-white px-2 py-1 text-xs shadow">
+      <div className="font-medium">{datum.label}</div>
+      <div>{datum.calories ?? 0} kcal</div>
+    </div>
+  )
+}
+
+function CalorieWeekChart({
+  week,
+  weekError,
+  calorieGoal,
+}: {
+  week: WeekDay[] | null
+  weekError: string | null
+  calorieGoal: number | null
+}) {
+  return (
+    <section className="mt-8">
+      <h2 className="text-lg font-medium text-gray-700">Calories — this week</h2>
+
+      {weekError && <p className="mt-2 text-sm text-red-600">{weekError}</p>}
+
+      {week !== null && (
+        <>
+          <div
+            data-testid="calorie-week-chart"
+            data-calorie-goal={calorieGoal ?? ''}
+            className="mt-3 h-64 w-full"
+          >
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={toBarData(week)}
+                margin={{ top: 8, right: 16, bottom: 8, left: 0 }}
+              >
+                <CartesianGrid stroke="#eee" strokeDasharray="3 3" />
+                <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip content={<CalorieWeekTooltip />} />
+                {calorieGoal !== null && (
+                  <ReferenceLine
+                    y={calorieGoal}
+                    stroke="#dc2626"
+                    strokeDasharray="4 4"
+                    label={{
+                      value: `Goal ${calorieGoal}`,
+                      position: 'insideTopRight',
+                      fontSize: 11,
+                      fill: '#dc2626',
+                    }}
+                  />
+                )}
+                <Bar dataKey="calories" isAnimationActive={false}>
+                  {toBarData(week).map((d) => (
+                    <Cell
+                      key={d.date}
+                      fill={d.is_future ? '#e5e7eb' : '#6366f1'}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          <ul
+            data-testid="week-day-summary"
+            className="mt-3 grid grid-cols-7 gap-1 text-center text-xs text-gray-600"
+          >
+            {toBarData(week).map((d) => (
+              <li
+                key={d.date}
+                data-day-state={d.is_future ? 'future' : 'past'}
+                data-day-label={d.label}
+                className={
+                  d.is_future
+                    ? 'rounded bg-gray-100 px-1 py-1 text-gray-400'
+                    : 'rounded bg-indigo-50 px-1 py-1 text-indigo-700'
+                }
+              >
+                <div className="font-medium">{d.label}</div>
+                <div>{d.is_future ? '—' : `${d.calories ?? 0}`}</div>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </section>
+  )
+}
 
 type Goals = {
   id: number
@@ -80,6 +215,8 @@ export default function Progress() {
   const [savedAt, setSavedAt] = useState<string | null>(null)
   const [entries, setEntries] = useState<WeightEntry[] | null>(null)
   const [weightError, setWeightError] = useState<string | null>(null)
+  const [week, setWeek] = useState<WeekDay[] | null>(null)
+  const [weekError, setWeekError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -108,6 +245,21 @@ export default function Progress() {
       })
       .catch((err: unknown) => {
         if (!cancelled) setWeightError(err instanceof Error ? err.message : 'failed to load')
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    apiClient
+      .get<WeekDay[]>('/dashboard/week')
+      .then((data) => {
+        if (!cancelled) setWeek(data)
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setWeekError(err instanceof Error ? err.message : 'failed to load')
       })
     return () => {
       cancelled = true
@@ -171,6 +323,12 @@ export default function Progress() {
           </div>
         )}
       </div>
+
+      <CalorieWeekChart
+        week={week}
+        weekError={weekError}
+        calorieGoal={goals?.calorie_goal ?? null}
+      />
 
       <section aria-labelledby="goals-heading" className="mt-8">
         <h2 id="goals-heading" className="text-lg font-semibold">
