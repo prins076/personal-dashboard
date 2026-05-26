@@ -165,10 +165,10 @@ Vite proxy: `/api` → `http://localhost:8000` (no env var needed).
   "mcpServers": {
     "fitness": {
       "command": "uv",
-      "args": ["run", "--project", "/home/jelle/projects/personal-dashboard/backend",
+      "args": ["run", "--project", "/path/to/personal-dashboard/backend",
                "python", "-m", "fitness.mcp_server"],
       "env": {
-        "FITNESS_DB_PATH": "/home/jelle/projects/personal-dashboard/backend/data/fitness.db"
+        "FITNESS_DB_PATH": "/path/to/personal-dashboard/backend/data/fitness.db"
       }
     }
   }

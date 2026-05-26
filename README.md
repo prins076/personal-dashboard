@@ -76,19 +76,21 @@ Opens `fitness.db` directly — independent of FastAPI.
 | `update_goals` | any goal field |
 
 **MCP registration** (`.claude/settings.json`):
+
+`setup.sh` writes the correct absolute paths into `.claude/settings.json` automatically. For Claude Desktop or a manual setup, use the block below — replace `/path/to/personal-dashboard` with your actual clone path:
+
 ```json
 {
   "mcpServers": {
     "fitness": {
       "command": "uv",
-      "args": ["run", "--project", "/home/jelle/projects/personal-dashboard/backend",
+      "args": ["run", "--directory", "/path/to/personal-dashboard/backend",
+               "--project", "/path/to/personal-dashboard/backend",
                "python", "-m", "fitness.mcp_server"],
       "env": {
-        "FITNESS_DB_PATH": "/home/jelle/projects/personal-dashboard/backend/data/fitness.db"
+        "FITNESS_DB_PATH": "/path/to/personal-dashboard/backend/data/fitness.db"
       }
     }
   }
 }
 ```
-
-For Claude Desktop, copy the same block to `~/.claude/settings.json`.

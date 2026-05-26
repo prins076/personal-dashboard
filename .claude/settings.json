@@ -5,15 +5,15 @@
       "args": [
         "run",
         "--directory",
-        "/home/jelle/projects/personal-dashboard/backend",
+        "$HOME/projects/personal-dashboard/backend",
         "--project",
-        "/home/jelle/projects/personal-dashboard/backend",
+        "$HOME/projects/personal-dashboard/backend",
         "python",
         "-m",
         "fitness.mcp_server"
       ],
       "env": {
-        "FITNESS_DB_PATH": "/home/jelle/projects/personal-dashboard/backend/data/fitness.db"
+        "FITNESS_DB_PATH": "$HOME/projects/personal-dashboard/backend/data/fitness.db"
       }
     }
   }
