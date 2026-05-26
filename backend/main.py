@@ -13,6 +13,7 @@ from routers.exercise import router as exercise_router
 from routers.food import router as food_router
 from routers.goals import router as goals_router
 from routers.meals import router as meals_router
+from routers.profile import router as profile_router
 from routers.water import router as water_router
 from routers.weight import router as weight_router
 
@@ -33,6 +34,7 @@ for sub in (
     dashboard_router,
     food_router,
     goals_router,
+    profile_router,
     water_router,
     weight_router,
     exercise_router,

@@ -17,6 +17,7 @@ EXPECTED_TABLES = (
     "weight_entries",
     "exercise_entries",
     "user_goals",
+    "user_profile",
 )
 
 SCHEMA = """
@@ -93,6 +94,17 @@ CREATE TABLE IF NOT EXISTS user_goals (
     weight_goal_kg REAL,
     updated_at TEXT DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS user_profile (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    age INTEGER,
+    sex TEXT CHECK (sex IN ('male', 'female')),
+    height_cm REAL,
+    activity_level TEXT CHECK (activity_level IN (
+        'sedentary', 'lightly_active', 'moderately_active', 'very_active', 'extra_active'
+    )),
+    updated_at TEXT DEFAULT (datetime('now'))
+);
 """
 
 
@@ -119,6 +131,7 @@ def init_db() -> None:
     with get_connection() as conn:
         conn.executescript(SCHEMA)
         conn.execute("INSERT OR IGNORE INTO user_goals (id) VALUES (1)")
+        conn.execute("INSERT OR IGNORE INTO user_profile (id) VALUES (1)")
         conn.commit()
 
 
