@@ -75,20 +75,35 @@ Opens `fitness.db` directly — independent of FastAPI.
 | `get_weight_trend` | `days=30` |
 | `update_goals` | any goal field |
 
-**MCP registration** (`.claude/settings.json`):
+**MCP registration**:
 
-`setup.sh` writes the correct absolute paths into `.claude/settings.json` automatically. For Claude Desktop or a manual setup, use the block below — replace `/path/to/personal-dashboard` with your actual clone path:
+`setup.sh` writes the correct absolute paths into `.claude/settings.json` automatically for use with Claude Code CLI.
+
+To register the MCP server with **Claude Desktop** (Windows + WSL 2):
+
+1. Open Claude Desktop and press **Ctrl + ,** to open Settings.
+2. Go to **Developer** in the left sidebar.
+3. Click **Edit Config** — this opens `claude_desktop_config.json` in your editor.
+4. Add the `mcpServers` block below into the JSON file. If a `mcpServers` key already exists, merge the `"fitness"` entry into it rather than replacing the whole object.
+5. Replace `<wsl-username>` with your WSL username (e.g. `jelle`), and change `Ubuntu` to your distro name if different.
+6. Save the file and **restart Claude Desktop**. The fitness tools will appear in a new conversation.
 
 ```json
 {
   "mcpServers": {
     "fitness": {
-      "command": "uv",
-      "args": ["run", "--directory", "/path/to/personal-dashboard/backend",
-               "--project", "/path/to/personal-dashboard/backend",
-               "python", "-m", "fitness.mcp_server"],
+      "command": "wsl",
+      "args": [
+        "-d", "Ubuntu",
+        "--",
+        "/home/<wsl-username>/.local/bin/uv",
+        "run",
+        "--project", "/home/<wsl-username>/projects/personal-dashboard/backend",
+        "--directory", "/home/<wsl-username>/projects/personal-dashboard/backend",
+        "python", "-m", "fitness.mcp_server"
+      ],
       "env": {
-        "FITNESS_DB_PATH": "/path/to/personal-dashboard/backend/data/fitness.db"
+        "FITNESS_DB_PATH": "/home/<wsl-username>/projects/personal-dashboard/backend/data/fitness.db"
       }
     }
   }
