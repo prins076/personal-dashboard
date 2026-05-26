@@ -4,7 +4,7 @@ You are an AI Agent running in WSL 2 on Windows
 
 ### Issue tracker
 
-Issues live as local markdown files under `.scratch/`. See `docs/agents/issue-tracker.md`.
+Issues live on GitHub. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

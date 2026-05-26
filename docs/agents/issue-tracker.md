@@ -1,19 +1,31 @@
-# Issue tracker: Local Markdown
+# Issue tracker: GitHub Issues
 
-Issues and PRDs for this repo live as markdown files in `.scratch/`.
+Issues for this repo live on GitHub at `prins076/personal-dashboard`. Use the `gh` CLI to interact with them.
 
-## Conventions
+## Common commands
 
-- One feature per directory: `.scratch/<feature-slug>/`
-- The PRD is `.scratch/<feature-slug>/PRD.md`
-- Implementation issues are `.scratch/<feature-slug>/issues/<NN>-<slug>.md`, numbered from `01`
-- Triage state is recorded as a `Status:` line near the top of each issue file (see `triage-labels.md` for the role strings)
-- Comments and conversation history append to the bottom of the file under a `## Comments` heading
+```bash
+# List open issues
+gh issue list
+
+# View a specific issue
+gh issue view <number>
+
+# Create a new issue
+gh issue create --title "title" --body "body" --label "needs-triage"
+
+# Add/remove a label
+gh issue edit <number> --add-label "ready-for-agent"
+gh issue edit <number> --remove-label "needs-triage"
+
+# Close an issue
+gh issue close <number>
+```
 
 ## When a skill says "publish to the issue tracker"
 
-Create a new file under `.scratch/<feature-slug>/` (creating the directory if needed).
+Run `gh issue create` with an appropriate title, body, and `needs-triage` label.
 
 ## When a skill says "fetch the relevant ticket"
 
-Read the file at the referenced path. The user will normally pass the path or the issue number directly.
+Run `gh issue view <number>`. The user will normally pass the issue number directly.
