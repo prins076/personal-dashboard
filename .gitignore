@@ -44,3 +44,8 @@ __pycache__/
 
 # Local DB
 backend/data/
+
+# AFK agent framework (local only)
+.sandcastle/
+package.json
+package-lock.json
