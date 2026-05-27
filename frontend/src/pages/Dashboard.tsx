@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import { apiClient } from '../api/client'
 import { MEAL_TYPES, type MealEntry, type MealType } from '../api/meals'
+import { useTheme } from '../hooks/useTheme'
 
 type DashboardGoals = {
   id: number
@@ -71,6 +72,11 @@ function formatLabel(type: MealType): string {
 }
 
 function CalorieRing({ current, goal }: { current: number; goal: number | null }) {
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
+  const trackColor = isDark ? '#374151' : '#e5e7eb'
+  const valueTextColor = isDark ? '#f3f4f6' : '#111827'
+  const labelTextColor = isDark ? '#9ca3af' : '#6b7280'
   const target = goal ?? 0
   const percentage =
     target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0
@@ -94,7 +100,7 @@ function CalorieRing({ current, goal }: { current: number; goal: number | null }
           cy={70}
           r={radius}
           fill="none"
-          stroke="#e5e7eb"
+          stroke={trackColor}
           strokeWidth={stroke}
         />
         <circle
@@ -115,7 +121,7 @@ function CalorieRing({ current, goal }: { current: number; goal: number | null }
           textAnchor="middle"
           fontSize="22"
           fontWeight="600"
-          fill="#111827"
+          fill={valueTextColor}
         >
           {percentage}%
         </text>
@@ -124,12 +130,12 @@ function CalorieRing({ current, goal }: { current: number; goal: number | null }
           y={88}
           textAnchor="middle"
           fontSize="12"
-          fill="#6b7280"
+          fill={labelTextColor}
         >
           of goal
         </text>
       </svg>
-      <p className="mt-2 text-sm text-gray-600">
+      <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
         <span data-testid="calorie-current">{Math.round(current)}</span>
         {' / '}
         <span data-testid="calorie-goal">{target}</span> kcal
@@ -182,7 +188,7 @@ function MacroPie({
           </ResponsiveContainer>
         )}
       </div>
-      <ul className="flex flex-wrap items-center justify-center gap-3 text-xs text-gray-600">
+      <ul className="flex flex-wrap items-center justify-center gap-3 text-xs text-gray-600 dark:text-gray-400">
         {data.map((d) => (
           <li key={d.name} className="flex items-center gap-1">
             <span
@@ -212,10 +218,10 @@ function WaterBar({
   const goal = data.water_goal_ml
   const percentage = goal > 0 ? Math.min(100, (total / goal) * 100) : 0
   return (
-    <section className="rounded-lg border border-gray-200 p-4">
+    <section className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
       <div className="flex items-baseline justify-between">
         <h2 className="text-lg font-semibold">Water</h2>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           <span data-testid="water-total">{total}</span>
           {' ml / '}
           <span data-testid="water-goal">{goal}</span>
@@ -223,7 +229,7 @@ function WaterBar({
         </p>
       </div>
       <div
-        className="mt-2 h-3 w-full overflow-hidden rounded-full bg-gray-100"
+        className="mt-2 h-3 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700"
         role="progressbar"
         aria-valuenow={Math.round(percentage)}
         aria-valuemin={0}
@@ -242,7 +248,7 @@ function WaterBar({
             type="button"
             disabled={busy}
             onClick={() => onAdd(amount)}
-            className="rounded-md border border-sky-300 bg-sky-50 px-3 py-1 text-sm font-medium text-sky-700 hover:bg-sky-100 disabled:opacity-50"
+            className="rounded-md border border-sky-300 bg-sky-50 px-3 py-1 text-sm font-medium text-sky-700 hover:bg-sky-100 disabled:opacity-50 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300 dark:hover:bg-sky-900"
           >
             +{amount}ml
           </button>
@@ -254,26 +260,26 @@ function WaterBar({
 
 function MealsList({ meals }: { meals: Record<MealType, MealEntry[]> }) {
   return (
-    <section className="rounded-lg border border-gray-200 p-4">
+    <section className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
       <h2 className="text-lg font-semibold">Today's meals</h2>
       <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
         {MEAL_TYPES.map((type) => (
           <div
             key={type}
             data-testid={`dash-meals-${type}`}
-            className="rounded border border-gray-100 p-3"
+            className="rounded border border-gray-100 p-3 dark:border-gray-800"
           >
-            <h3 className="text-sm font-medium text-gray-700">
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
               {formatLabel(type)}
             </h3>
             {meals[type].length === 0 ? (
-              <p className="mt-1 text-xs text-gray-400">Nothing logged.</p>
+              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Nothing logged.</p>
             ) : (
               <ul className="mt-1 space-y-1">
                 {meals[type].map((entry) => (
                   <li key={entry.id} className="text-sm">
                     <span className="font-medium">{entry.food_name}</span>
-                    <span className="ml-1 text-xs text-gray-500">
+                    <span className="ml-1 text-xs text-gray-500 dark:text-gray-400">
                       {entry.quantity} {entry.unit}
                       {entry.calories != null && ` · ${entry.calories} kcal`}
                     </span>
@@ -292,15 +298,15 @@ function WeightWidget({ data }: { data: DashboardWeight }) {
   return (
     <section
       data-testid="weight-widget"
-      className="rounded-lg border border-gray-200 p-4"
+      className="rounded-lg border border-gray-200 p-4 dark:border-gray-800"
     >
       <h2 className="text-lg font-semibold">Weight</h2>
       {data.latest === null ? (
-        <p className="mt-2 text-sm text-gray-500">No weight logged yet.</p>
+        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">No weight logged yet.</p>
       ) : (
         <div className="mt-2">
           <p className="text-2xl font-semibold">{data.latest.weight_kg} kg</p>
-          <p className="text-xs text-gray-500">on {data.latest.date}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">on {data.latest.date}</p>
           {data.change_from_previous !== null && (
             <p
               className={
@@ -308,7 +314,7 @@ function WeightWidget({ data }: { data: DashboardWeight }) {
                   ? 'mt-1 text-sm text-emerald-600'
                   : data.change_from_previous > 0
                     ? 'mt-1 text-sm text-rose-600'
-                    : 'mt-1 text-sm text-gray-500'
+                    : 'mt-1 text-sm text-gray-500 dark:text-gray-400'
               }
             >
               {data.change_from_previous > 0 ? '+' : ''}
@@ -325,11 +331,11 @@ function ExerciseSummary({ data }: { data: DashboardExercise }) {
   return (
     <section
       data-testid="exercise-summary"
-      className="rounded-lg border border-gray-200 p-4"
+      className="rounded-lg border border-gray-200 p-4 dark:border-gray-800"
     >
       <div className="flex items-baseline justify-between">
         <h2 className="text-lg font-semibold">Exercise</h2>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           <span>{data.total_duration_min}</span> min
           {data.total_calories_burned > 0 && (
             <span> · {Math.round(data.total_calories_burned)} kcal</span>
@@ -337,9 +343,9 @@ function ExerciseSummary({ data }: { data: DashboardExercise }) {
         </p>
       </div>
       {data.entries.length === 0 ? (
-        <p className="mt-2 text-sm text-gray-500">Nothing logged today.</p>
+        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Nothing logged today.</p>
       ) : (
-        <ul className="mt-2 divide-y divide-gray-100">
+        <ul className="mt-2 divide-y divide-gray-100 dark:divide-gray-800">
           {data.entries.map((entry) => (
             <li
               key={entry.id}
@@ -347,10 +353,10 @@ function ExerciseSummary({ data }: { data: DashboardExercise }) {
             >
               <div>
                 <p className="font-medium">{entry.name}</p>
-                <p className="text-xs text-gray-500">{entry.category}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{entry.category}</p>
               </div>
               {entry.duration_min != null && (
-                <p className="text-xs text-gray-500">{entry.duration_min} min</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{entry.duration_min} min</p>
               )}
             </li>
           ))}
@@ -405,11 +411,11 @@ export default function Dashboard() {
       )}
 
       {!data ? (
-        <p className="text-sm text-gray-500">Loading…</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>
       ) : (
         <>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <section className="rounded-lg border border-gray-200 p-4">
+            <section className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
               <h2 className="text-lg font-semibold">Calories</h2>
               <div className="mt-3 flex justify-center">
                 <CalorieRing
@@ -418,7 +424,7 @@ export default function Dashboard() {
                 />
               </div>
             </section>
-            <section className="rounded-lg border border-gray-200 p-4">
+            <section className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
               <h2 className="text-lg font-semibold">Macros</h2>
               <MacroPie
                 protein={data.totals.protein_g}

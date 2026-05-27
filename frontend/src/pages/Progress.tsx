@@ -13,6 +13,17 @@ import {
   YAxis,
 } from 'recharts'
 import { apiClient } from '../api/client'
+import { useTheme } from '../hooks/useTheme'
+
+function useChartColors() {
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
+  return {
+    grid: isDark ? '#374151' : '#eee',
+    axis: isDark ? '#9ca3af' : '#6b7280',
+    futureBar: isDark ? '#4b5563' : '#e5e7eb',
+  }
+}
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const
 
@@ -56,7 +67,7 @@ function CalorieWeekTooltip({
   const datum = payload[0].payload
   if (datum.is_future) return null
   return (
-    <div className="rounded border border-gray-300 bg-white px-2 py-1 text-xs shadow">
+    <div className="rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1 text-xs shadow">
       <div className="font-medium">{datum.label}</div>
       <div>{datum.calories ?? 0} kcal</div>
     </div>
@@ -72,9 +83,10 @@ function CalorieWeekChart({
   weekError: string | null
   calorieGoal: number | null
 }) {
+  const colors = useChartColors()
   return (
     <section className="mt-8">
-      <h2 className="text-lg font-medium text-gray-700">Calories — this week</h2>
+      <h2 className="text-lg font-medium text-gray-700 dark:text-gray-300">Calories — this week</h2>
 
       {weekError && <p className="mt-2 text-sm text-red-600">{weekError}</p>}
 
@@ -90,9 +102,9 @@ function CalorieWeekChart({
                 data={toBarData(week)}
                 margin={{ top: 8, right: 16, bottom: 8, left: 0 }}
               >
-                <CartesianGrid stroke="#eee" strokeDasharray="3 3" />
-                <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
+                <CartesianGrid stroke={colors.grid} strokeDasharray="3 3" />
+                <XAxis dataKey="label" tick={{ fontSize: 12, fill: colors.axis }} />
+                <YAxis tick={{ fontSize: 12, fill: colors.axis }} />
                 <Tooltip content={<CalorieWeekTooltip />} />
                 {calorieGoal !== null && (
                   <ReferenceLine
@@ -111,7 +123,7 @@ function CalorieWeekChart({
                   {toBarData(week).map((d) => (
                     <Cell
                       key={d.date}
-                      fill={d.is_future ? '#e5e7eb' : '#6366f1'}
+                      fill={d.is_future ? colors.futureBar : '#6366f1'}
                     />
                   ))}
                 </Bar>
@@ -121,7 +133,7 @@ function CalorieWeekChart({
 
           <ul
             data-testid="week-day-summary"
-            className="mt-3 grid grid-cols-7 gap-1 text-center text-xs text-gray-600"
+            className="mt-3 grid grid-cols-7 gap-1 text-center text-xs text-gray-600 dark:text-gray-400"
           >
             {toBarData(week).map((d) => (
               <li
@@ -130,8 +142,8 @@ function CalorieWeekChart({
                 data-day-label={d.label}
                 className={
                   d.is_future
-                    ? 'rounded bg-gray-100 px-1 py-1 text-gray-400'
-                    : 'rounded bg-indigo-50 px-1 py-1 text-indigo-700'
+                    ? 'rounded bg-gray-100 dark:bg-gray-700 px-1 py-1 text-gray-400 dark:text-gray-500'
+                    : 'rounded bg-indigo-50 dark:bg-indigo-950 px-1 py-1 text-indigo-700 dark:text-indigo-300'
                 }
               >
                 <div className="font-medium">{d.label}</div>
@@ -208,6 +220,7 @@ function diffPatch(form: FormState, base: Goals): Partial<Record<GoalField, numb
 }
 
 export default function Progress() {
+  const colors = useChartColors()
   const [goals, setGoals] = useState<Goals | null>(null)
   const [form, setForm] = useState<FormState | null>(null)
   const [saving, setSaving] = useState(false)
@@ -289,23 +302,23 @@ export default function Progress() {
       <h1 className="text-2xl font-semibold">Progress</h1>
 
       <div className="mt-6">
-        <h2 className="text-lg font-medium text-gray-700">Weight — last 30 days</h2>
+        <h2 className="text-lg font-medium text-gray-700 dark:text-gray-300">Weight — last 30 days</h2>
 
         {weightError && <p className="mt-2 text-sm text-red-600">{weightError}</p>}
 
         {entries && entries.length === 0 && (
-          <p className="mt-2 text-sm text-gray-500">No weight entries yet.</p>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">No weight entries yet.</p>
         )}
 
         {entries && entries.length > 0 && (
           <div data-testid="weight-chart" className="mt-3 h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={entries} margin={{ top: 8, right: 16, bottom: 8, left: 0 }}>
-                <CartesianGrid stroke="#eee" strokeDasharray="3 3" />
-                <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                <CartesianGrid stroke={colors.grid} strokeDasharray="3 3" />
+                <XAxis dataKey="date" tick={{ fontSize: 12, fill: colors.axis }} />
                 <YAxis
                   domain={['dataMin - 1', 'dataMax + 1']}
-                  tick={{ fontSize: 12 }}
+                  tick={{ fontSize: 12, fill: colors.axis }}
                   unit=" kg"
                 />
                 <Tooltip />
@@ -342,19 +355,19 @@ export default function Progress() {
         )}
 
         {!form || !goals ? (
-          <p className="mt-2 text-sm text-gray-500">Loading…</p>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Loading…</p>
         ) : (
           <form onSubmit={handleSubmit} className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             {FIELDS.map(({ key, label, step, min }) => (
               <label key={key} className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-gray-700">{label}</span>
+                <span className="font-medium text-gray-700 dark:text-gray-300">{label}</span>
                 <input
                   type="number"
                   step={step}
                   min={min}
                   value={form[key]}
                   onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                  className="rounded border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+                  className="rounded border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
                 />
               </label>
             ))}
@@ -368,7 +381,7 @@ export default function Progress() {
                 {saving ? 'Saving…' : 'Save'}
               </button>
               {savedAt && !saving && (
-                <span className="text-xs text-gray-500">Saved {savedAt}</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">Saved {savedAt}</span>
               )}
             </div>
           </form>

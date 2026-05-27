@@ -56,7 +56,7 @@ function buildQuery(start: string, end: string): string {
 function MealsTable({ rows }: { rows: MealEntry[] }) {
   return (
     <table className="w-full table-auto text-sm">
-      <thead className="border-b border-gray-200 text-left text-xs uppercase text-gray-500">
+      <thead className="border-b border-gray-200 dark:border-gray-800 text-left text-xs uppercase text-gray-500 dark:text-gray-400">
         <tr>
           <th className="px-3 py-2">Date</th>
           <th className="px-3 py-2">Meal</th>
@@ -68,7 +68,7 @@ function MealsTable({ rows }: { rows: MealEntry[] }) {
           <th className="px-3 py-2">Fat</th>
         </tr>
       </thead>
-      <tbody className="divide-y divide-gray-100">
+      <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
         {rows.map((e) => (
           <tr key={e.id}>
             <td className="px-3 py-2">{e.date}</td>
@@ -89,14 +89,14 @@ function MealsTable({ rows }: { rows: MealEntry[] }) {
 function WaterTable({ rows }: { rows: WaterEntry[] }) {
   return (
     <table className="w-full table-auto text-sm">
-      <thead className="border-b border-gray-200 text-left text-xs uppercase text-gray-500">
+      <thead className="border-b border-gray-200 dark:border-gray-800 text-left text-xs uppercase text-gray-500 dark:text-gray-400">
         <tr>
           <th className="px-3 py-2">Date</th>
           <th className="px-3 py-2">Amount (ml)</th>
           <th className="px-3 py-2">Notes</th>
         </tr>
       </thead>
-      <tbody className="divide-y divide-gray-100">
+      <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
         {rows.map((e) => (
           <tr key={e.id}>
             <td className="px-3 py-2">{e.date}</td>
@@ -114,7 +114,7 @@ function ExerciseTable({ rows }: { rows: ExerciseEntry[] }) {
     e.sets != null && e.reps != null ? `${e.sets}×${e.reps}` : '—'
   return (
     <table className="w-full table-auto text-sm">
-      <thead className="border-b border-gray-200 text-left text-xs uppercase text-gray-500">
+      <thead className="border-b border-gray-200 dark:border-gray-800 text-left text-xs uppercase text-gray-500 dark:text-gray-400">
         <tr>
           <th className="px-3 py-2">Date</th>
           <th className="px-3 py-2">Name</th>
@@ -126,7 +126,7 @@ function ExerciseTable({ rows }: { rows: ExerciseEntry[] }) {
           <th className="px-3 py-2">Calories burned</th>
         </tr>
       </thead>
-      <tbody className="divide-y divide-gray-100">
+      <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
         {rows.map((e) => (
           <tr key={e.id}>
             <td className="px-3 py-2">{e.date}</td>
@@ -151,7 +151,7 @@ function ExerciseTable({ rows }: { rows: ExerciseEntry[] }) {
 function WeightTable({ rows }: { rows: WeightEntry[] }) {
   return (
     <table className="w-full table-auto text-sm">
-      <thead className="border-b border-gray-200 text-left text-xs uppercase text-gray-500">
+      <thead className="border-b border-gray-200 dark:border-gray-800 text-left text-xs uppercase text-gray-500 dark:text-gray-400">
         <tr>
           <th className="px-3 py-2">Date</th>
           <th className="px-3 py-2">Weight (kg)</th>
@@ -159,7 +159,7 @@ function WeightTable({ rows }: { rows: WeightEntry[] }) {
           <th className="px-3 py-2">Notes</th>
         </tr>
       </thead>
-      <tbody className="divide-y divide-gray-100">
+      <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
         {rows.map((e) => (
           <tr key={e.id}>
             <td className="px-3 py-2">{e.date}</td>
@@ -258,7 +258,7 @@ export default function History() {
     <section className="p-6">
       <h1 className="text-2xl font-semibold">History</h1>
 
-      <div role="tablist" className="mt-4 flex gap-2 border-b border-gray-200">
+      <div role="tablist" className="mt-4 flex gap-2 border-b border-gray-200 dark:border-gray-800">
         {TABS.map((t) => (
           <button
             key={t.key}
@@ -267,8 +267,8 @@ export default function History() {
             onClick={() => setTab(t.key)}
             className={
               tab === t.key
-                ? 'border-b-2 border-indigo-600 px-3 py-2 text-sm font-medium text-indigo-700'
-                : 'border-b-2 border-transparent px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-900'
+                ? 'border-b-2 border-indigo-600 dark:border-indigo-400 px-3 py-2 text-sm font-medium text-indigo-700 dark:text-indigo-400'
+                : 'border-b-2 border-transparent px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900'
             }
           >
             {t.label}
@@ -278,21 +278,21 @@ export default function History() {
 
       <div className="mt-4 flex flex-wrap items-end gap-3">
         <label className="flex flex-col text-sm">
-          <span className="text-gray-600">From</span>
+          <span className="text-gray-600 dark:text-gray-400">From</span>
           <input
             type="date"
             value={start}
             onChange={(e) => setStart(e.target.value)}
-            className="mt-1 rounded border border-gray-300 px-2 py-1"
+            className="mt-1 rounded border border-gray-300 dark:border-gray-700 px-2 py-1"
           />
         </label>
         <label className="flex flex-col text-sm">
-          <span className="text-gray-600">To</span>
+          <span className="text-gray-600 dark:text-gray-400">To</span>
           <input
             type="date"
             value={end}
             onChange={(e) => setEnd(e.target.value)}
-            className="mt-1 rounded border border-gray-300 px-2 py-1"
+            className="mt-1 rounded border border-gray-300 dark:border-gray-700 px-2 py-1"
           />
         </label>
       </div>
@@ -303,11 +303,11 @@ export default function History() {
         </p>
       )}
 
-      <div className="mt-4 overflow-x-auto rounded border border-gray-200">
+      <div className="mt-4 overflow-x-auto rounded border border-gray-200 dark:border-gray-800">
         {loading && rows.length === 0 ? (
-          <p className="p-4 text-sm text-gray-500">Loading…</p>
+          <p className="p-4 text-sm text-gray-500 dark:text-gray-400">Loading…</p>
         ) : rows.length === 0 ? (
-          <p className="p-4 text-sm text-gray-500">No entries for the selected range.</p>
+          <p className="p-4 text-sm text-gray-500 dark:text-gray-400">No entries for the selected range.</p>
         ) : tab === 'meals' ? (
           <MealsTable rows={meals.slice(pageStart, pageEnd)} />
         ) : tab === 'water' ? (
@@ -321,7 +321,7 @@ export default function History() {
 
       {rows.length > PAGE_SIZE && (
         <div className="mt-3 flex items-center justify-between text-sm">
-          <span className="text-gray-600">
+          <span className="text-gray-600 dark:text-gray-400">
             Page {currentPage} of {totalPages} · {rows.length} entries
           </span>
           <div className="flex gap-2">
@@ -329,7 +329,7 @@ export default function History() {
               type="button"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="rounded border border-gray-300 px-3 py-1 text-sm disabled:opacity-50"
+              className="rounded border border-gray-300 dark:border-gray-700 px-3 py-1 text-sm disabled:opacity-50"
             >
               Previous
             </button>
@@ -337,7 +337,7 @@ export default function History() {
               type="button"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="rounded border border-gray-300 px-3 py-1 text-sm disabled:opacity-50"
+              className="rounded border border-gray-300 dark:border-gray-700 px-3 py-1 text-sm disabled:opacity-50"
             >
               Next
             </button>

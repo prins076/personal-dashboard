@@ -125,7 +125,7 @@ function AddFoodModal({ onClose, onCreated }: AddFoodModalProps) {
       aria-labelledby="add-food-title"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
     >
-      <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
+      <div className="w-full max-w-lg rounded-lg bg-white dark:bg-gray-800 p-6 shadow-xl">
         <div className="flex items-start justify-between">
           <h2 id="add-food-title" className="text-lg font-semibold">
             {step === 'search' ? 'Add food' : `Log "${picked?.name}"`}
@@ -133,7 +133,7 @@ function AddFoodModal({ onClose, onCreated }: AddFoodModalProps) {
           <button
             type="button"
             onClick={onClose}
-            className="text-sm text-gray-500 hover:text-gray-900"
+            className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900"
             aria-label="Close modal"
           >
             ×
@@ -143,12 +143,12 @@ function AddFoodModal({ onClose, onCreated }: AddFoodModalProps) {
         {step === 'search' && (
           <form onSubmit={handleSearch} className="mt-4">
             <label className="flex flex-col text-sm">
-              <span className="text-gray-600">Search</span>
+              <span className="text-gray-600 dark:text-gray-400">Search</span>
               <div className="mt-1 flex gap-2">
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className="flex-1 rounded border border-gray-300 px-2 py-1"
+                  className="flex-1 rounded border border-gray-300 dark:border-gray-700 px-2 py-1"
                   placeholder="e.g. oats"
                   autoFocus
                 />
@@ -168,9 +168,9 @@ function AddFoodModal({ onClose, onCreated }: AddFoodModalProps) {
               </p>
             )}
 
-            <ul className="mt-4 max-h-64 divide-y divide-gray-100 overflow-y-auto rounded border border-gray-200">
+            <ul className="mt-4 max-h-64 divide-y divide-gray-100 dark:divide-gray-800 overflow-y-auto rounded border border-gray-200 dark:border-gray-800">
               {results.length === 0 && !searching && (
-                <li className="px-3 py-2 text-sm text-gray-500">
+                <li className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
                   No results yet — search for a food.
                 </li>
               )}
@@ -184,14 +184,14 @@ function AddFoodModal({ onClose, onCreated }: AddFoodModalProps) {
                       <span>{result.name}</span>
                       {result.source === 'local' && (
                         <span
-                          className="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700"
+                          className="rounded bg-emerald-100 dark:bg-emerald-950 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300"
                           aria-label="Saved custom food"
                         >
                           Saved
                         </span>
                       )}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {result.brand ? `${result.brand} · ` : ''}
                       {result.calories ?? '?'} kcal / 100 g
                       {result.source === 'off' && (
@@ -203,7 +203,7 @@ function AddFoodModal({ onClose, onCreated }: AddFoodModalProps) {
                     type="button"
                     aria-label={`Select ${result.name}`}
                     onClick={() => handlePick(result)}
-                    className="rounded border border-indigo-200 bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700"
+                    className="rounded border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950 px-2 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-300"
                   >
                     Select
                   </button>
@@ -217,90 +217,90 @@ function AddFoodModal({ onClose, onCreated }: AddFoodModalProps) {
           <form onSubmit={handleConfirm} className="mt-4 space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <label className="flex flex-col text-sm">
-                <span className="text-gray-600">Quantity</span>
+                <span className="text-gray-600 dark:text-gray-400">Quantity</span>
                 <input
                   type="number"
                   step="0.1"
                   min="0"
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
-                  className="mt-1 rounded border border-gray-300 px-2 py-1"
+                  className="mt-1 rounded border border-gray-300 dark:border-gray-700 px-2 py-1"
                   required
                 />
               </label>
               <label className="flex flex-col text-sm">
-                <span className="text-gray-600">Unit</span>
+                <span className="text-gray-600 dark:text-gray-400">Unit</span>
                 <input
                   value={unit}
                   onChange={(e) => setUnit(e.target.value)}
-                  className="mt-1 rounded border border-gray-300 px-2 py-1"
+                  className="mt-1 rounded border border-gray-300 dark:border-gray-700 px-2 py-1"
                   required
                 />
               </label>
             </div>
 
-            <fieldset className="rounded border border-gray-200 p-3">
-              <legend className="px-1 text-xs font-medium uppercase tracking-wide text-gray-600">
+            <fieldset className="rounded border border-gray-200 dark:border-gray-800 p-3">
+              <legend className="px-1 text-xs font-medium uppercase tracking-wide text-gray-600 dark:text-gray-400">
                 Macros (editable)
               </legend>
               <div className="grid grid-cols-2 gap-3">
                 <label className="flex flex-col text-sm">
-                  <span className="text-gray-600">Calories</span>
+                  <span className="text-gray-600 dark:text-gray-400">Calories</span>
                   <input
                     type="number"
                     step="0.1"
                     min="0"
                     value={calories}
                     onChange={(e) => setCalories(e.target.value)}
-                    className="mt-1 rounded border border-gray-300 px-2 py-1"
+                    className="mt-1 rounded border border-gray-300 dark:border-gray-700 px-2 py-1"
                     required
                   />
                 </label>
                 <label className="flex flex-col text-sm">
-                  <span className="text-gray-600">Protein (g)</span>
+                  <span className="text-gray-600 dark:text-gray-400">Protein (g)</span>
                   <input
                     type="number"
                     step="0.1"
                     min="0"
                     value={proteinG}
                     onChange={(e) => setProteinG(e.target.value)}
-                    className="mt-1 rounded border border-gray-300 px-2 py-1"
+                    className="mt-1 rounded border border-gray-300 dark:border-gray-700 px-2 py-1"
                     required
                   />
                 </label>
                 <label className="flex flex-col text-sm">
-                  <span className="text-gray-600">Carbs (g)</span>
+                  <span className="text-gray-600 dark:text-gray-400">Carbs (g)</span>
                   <input
                     type="number"
                     step="0.1"
                     min="0"
                     value={carbsG}
                     onChange={(e) => setCarbsG(e.target.value)}
-                    className="mt-1 rounded border border-gray-300 px-2 py-1"
+                    className="mt-1 rounded border border-gray-300 dark:border-gray-700 px-2 py-1"
                     required
                   />
                 </label>
                 <label className="flex flex-col text-sm">
-                  <span className="text-gray-600">Fat (g)</span>
+                  <span className="text-gray-600 dark:text-gray-400">Fat (g)</span>
                   <input
                     type="number"
                     step="0.1"
                     min="0"
                     value={fatG}
                     onChange={(e) => setFatG(e.target.value)}
-                    className="mt-1 rounded border border-gray-300 px-2 py-1"
+                    className="mt-1 rounded border border-gray-300 dark:border-gray-700 px-2 py-1"
                     required
                   />
                 </label>
                 <label className="flex flex-col text-sm">
-                  <span className="text-gray-600">Fiber (g)</span>
+                  <span className="text-gray-600 dark:text-gray-400">Fiber (g)</span>
                   <input
                     type="number"
                     step="0.1"
                     min="0"
                     value={fiberG}
                     onChange={(e) => setFiberG(e.target.value)}
-                    className="mt-1 rounded border border-gray-300 px-2 py-1"
+                    className="mt-1 rounded border border-gray-300 dark:border-gray-700 px-2 py-1"
                     required
                   />
                 </label>
@@ -308,11 +308,11 @@ function AddFoodModal({ onClose, onCreated }: AddFoodModalProps) {
             </fieldset>
 
             <label className="flex flex-col text-sm">
-              <span className="text-gray-600">Meal type</span>
+              <span className="text-gray-600 dark:text-gray-400">Meal type</span>
               <select
                 value={mealType}
                 onChange={(e) => setMealType(e.target.value as MealType)}
-                className="mt-1 rounded border border-gray-300 px-2 py-1"
+                className="mt-1 rounded border border-gray-300 dark:border-gray-700 px-2 py-1"
               >
                 {MEAL_TYPES.map((t) => (
                   <option key={t} value={t}>
@@ -332,7 +332,7 @@ function AddFoodModal({ onClose, onCreated }: AddFoodModalProps) {
               <button
                 type="button"
                 onClick={() => setStep('search')}
-                className="rounded border border-gray-300 px-3 py-1 text-sm"
+                className="rounded border border-gray-300 dark:border-gray-700 px-3 py-1 text-sm"
               >
                 Back
               </button>
@@ -363,13 +363,13 @@ function MealGroup({
   return (
     <section
       data-testid={`meal-group-${type}`}
-      className="rounded-lg border border-gray-200 p-4"
+      className="rounded-lg border border-gray-200 dark:border-gray-800 p-4"
     >
       <h2 className="text-base font-semibold">{formatLabel(type)}</h2>
       {entries.length === 0 ? (
-        <p className="mt-2 text-sm text-gray-500">Nothing logged yet.</p>
+        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Nothing logged yet.</p>
       ) : (
-        <ul className="mt-2 divide-y divide-gray-100">
+        <ul className="mt-2 divide-y divide-gray-100 dark:divide-gray-800">
           {entries.map((entry) => (
             <li
               key={entry.id}
@@ -377,7 +377,7 @@ function MealGroup({
             >
               <div>
                 <p className="font-medium">{entry.food_name}</p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   {entry.quantity} {entry.unit}
                   {entry.calories != null && ` · ${entry.calories} kcal`}
                   {entry.protein_g != null && ` · ${entry.protein_g}g P`}
@@ -465,7 +465,7 @@ export default function Nutrition() {
       )}
 
       {loading ? (
-        <p className="mt-6 text-sm text-gray-500">Loading…</p>
+        <p className="mt-6 text-sm text-gray-500 dark:text-gray-400">Loading…</p>
       ) : (
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
           {MEAL_TYPES.map((type) => (

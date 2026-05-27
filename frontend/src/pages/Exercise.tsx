@@ -76,7 +76,7 @@ function AddExerciseModal({ onClose, onCreated }: AddModalProps) {
     >
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl"
+        className="w-full max-w-lg rounded-lg bg-white dark:bg-gray-800 p-6 shadow-xl"
       >
         <h2 id="add-exercise-title" className="text-lg font-semibold">
           Add exercise
@@ -84,21 +84,21 @@ function AddExerciseModal({ onClose, onCreated }: AddModalProps) {
 
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="col-span-2 flex flex-col text-sm">
-            <span className="text-gray-600">Name</span>
+            <span className="text-gray-600 dark:text-gray-400">Name</span>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-1 rounded border border-gray-300 px-2 py-1"
+              className="mt-1 rounded border border-gray-300 dark:border-gray-700 px-2 py-1"
               required
             />
           </label>
 
           <label className="flex flex-col text-sm">
-            <span className="text-gray-600">Category</span>
+            <span className="text-gray-600 dark:text-gray-400">Category</span>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value as ExerciseCategory)}
-              className="mt-1 rounded border border-gray-300 px-2 py-1"
+              className="mt-1 rounded border border-gray-300 dark:border-gray-700 px-2 py-1"
             >
               {CATEGORIES.map((c) => (
                 <option key={c} value={c}>
@@ -109,80 +109,80 @@ function AddExerciseModal({ onClose, onCreated }: AddModalProps) {
           </label>
 
           <label className="flex flex-col text-sm">
-            <span className="text-gray-600">Duration (min)</span>
+            <span className="text-gray-600 dark:text-gray-400">Duration (min)</span>
             <input
               type="number"
               min="0"
               value={durationMin}
               onChange={(e) => setDurationMin(e.target.value)}
-              className="mt-1 rounded border border-gray-300 px-2 py-1"
+              className="mt-1 rounded border border-gray-300 dark:border-gray-700 px-2 py-1"
             />
           </label>
 
           <label className="flex flex-col text-sm">
-            <span className="text-gray-600">Sets</span>
+            <span className="text-gray-600 dark:text-gray-400">Sets</span>
             <input
               type="number"
               min="0"
               value={sets}
               onChange={(e) => setSets(e.target.value)}
-              className="mt-1 rounded border border-gray-300 px-2 py-1"
+              className="mt-1 rounded border border-gray-300 dark:border-gray-700 px-2 py-1"
             />
           </label>
 
           <label className="flex flex-col text-sm">
-            <span className="text-gray-600">Reps</span>
+            <span className="text-gray-600 dark:text-gray-400">Reps</span>
             <input
               type="number"
               min="0"
               value={reps}
               onChange={(e) => setReps(e.target.value)}
-              className="mt-1 rounded border border-gray-300 px-2 py-1"
+              className="mt-1 rounded border border-gray-300 dark:border-gray-700 px-2 py-1"
             />
           </label>
 
           <label className="flex flex-col text-sm">
-            <span className="text-gray-600">Weight (kg)</span>
+            <span className="text-gray-600 dark:text-gray-400">Weight (kg)</span>
             <input
               type="number"
               step="0.1"
               min="0"
               value={weightKg}
               onChange={(e) => setWeightKg(e.target.value)}
-              className="mt-1 rounded border border-gray-300 px-2 py-1"
+              className="mt-1 rounded border border-gray-300 dark:border-gray-700 px-2 py-1"
             />
           </label>
 
           <label className="flex flex-col text-sm">
-            <span className="text-gray-600">Distance (km)</span>
+            <span className="text-gray-600 dark:text-gray-400">Distance (km)</span>
             <input
               type="number"
               step="0.01"
               min="0"
               value={distanceKm}
               onChange={(e) => setDistanceKm(e.target.value)}
-              className="mt-1 rounded border border-gray-300 px-2 py-1"
+              className="mt-1 rounded border border-gray-300 dark:border-gray-700 px-2 py-1"
             />
           </label>
 
           <label className="flex flex-col text-sm">
-            <span className="text-gray-600">Calories burned</span>
+            <span className="text-gray-600 dark:text-gray-400">Calories burned</span>
             <input
               type="number"
               min="0"
               value={caloriesBurned}
               onChange={(e) => setCaloriesBurned(e.target.value)}
-              className="mt-1 rounded border border-gray-300 px-2 py-1"
+              className="mt-1 rounded border border-gray-300 dark:border-gray-700 px-2 py-1"
             />
           </label>
 
           <label className="col-span-2 flex flex-col text-sm">
-            <span className="text-gray-600">Notes</span>
+            <span className="text-gray-600 dark:text-gray-400">Notes</span>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
-              className="mt-1 rounded border border-gray-300 px-2 py-1"
+              className="mt-1 rounded border border-gray-300 dark:border-gray-700 px-2 py-1"
             />
           </label>
         </div>
@@ -197,7 +197,7 @@ function AddExerciseModal({ onClose, onCreated }: AddModalProps) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded border border-gray-300 px-3 py-1 text-sm"
+            className="rounded border border-gray-300 dark:border-gray-700 px-3 py-1 text-sm"
           >
             Cancel
           </button>
@@ -283,11 +283,11 @@ export default function Exercise() {
 
       <div className="mt-6">
         {loading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>
         ) : entries.length === 0 ? (
-          <p className="text-sm text-gray-500">No exercise logged today.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">No exercise logged today.</p>
         ) : (
-          <ul className="divide-y divide-gray-200 rounded border border-gray-200">
+          <ul className="divide-y divide-gray-200 dark:divide-gray-800 rounded border border-gray-200 dark:border-gray-800">
             {entries.map((entry) => (
               <li
                 key={entry.id}
@@ -295,7 +295,7 @@ export default function Exercise() {
               >
                 <div>
                   <p className="font-medium">{entry.name}</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     <span className="uppercase tracking-wide">{entry.category}</span>
                     {statLine(entry) && <span> · {statLine(entry)}</span>}
                   </p>
