@@ -26,3 +26,6 @@ A user-defined `Food` with no `off_id`. Created via the `create_food` MCP tool. 
 
 ## Open Food Facts (OFF)
 The external nutrition database used to look up per-100g macros. Products missing `energy-kcal_100g` are skipped. On failure, `search_food` returns a typed error (`OFF_UNREACHABLE` or `NO_RESULTS`) — it never serves stale cache.
+
+## User Profile
+A singleton record (`user_profile` table, always `id=1`) storing biometric stats: `age` (integer years), `sex` (`male` | `female`), `height_cm` (real), and `activity_level` (`sedentary` | `lightly_active` | `moderately_active` | `very_active` | `extra_active`). All fields are nullable — the profile starts empty and is built up via `PATCH /api/profile`. These values feed the Mifflin-St Jeor calorie goal calculator.

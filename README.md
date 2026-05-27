@@ -12,19 +12,20 @@ personal-dashboard/
 │   └── settings.json         # MCP server registration (stdio)
 ├── backend/
 │   ├── pyproject.toml        # uv project (FastAPI, uvicorn, httpx, pydantic, mcp)
-│   └── src/fitness/
-│       ├── db.py             # SQLite init + WAL mode
-│       ├── models.py         # Pydantic schemas
-│       ├── main.py           # FastAPI app, CORS, mounts routers
-│       ├── off_client.py     # Open Food Facts API + foods cache
-│       ├── routers/          # meals, water, weight, exercise, dashboard, food_search, goals
-│       └── mcp_server.py     # Standalone MCP stdio server
+│   ├── db.py                 # SQLite init + WAL mode
+│   ├── main.py               # FastAPI app, CORS, mounts routers
+│   ├── off_client.py         # Open Food Facts API + foods cache
+│   ├── routers/              # dashboard, exercise, food, goals, meals, profile, water, weight
+│   ├── fitness/
+│   │   └── mcp_server.py     # Standalone MCP stdio server
+│   └── tests/
 └── frontend/
     ├── package.json          # React 19, Vite 7, Tailwind 4, Recharts, react-router-dom v6
     └── src/
-        ├── api/client.ts     # typed fetch wrappers
-        ├── pages/            # Dashboard, Nutrition, Exercise, Progress, History
-        └── components/       # MacroPieChart, WeightLineChart, CalorieBarChart, WaterProgressBar, …
+        ├── api/              # typed fetch wrappers (client, meals, exercise, food)
+        ├── hooks/            # useTheme
+        ├── components/       # ThemeToggle
+        └── pages/            # Dashboard, Nutrition, Exercise, Progress, History
 ```
 
 ## Setup & Run
@@ -33,7 +34,7 @@ personal-dashboard/
 ```bash
 # backend
 cd backend && uv sync --python 3.12
-uv run python -c "from fitness.db import init_db; init_db()"
+uv run python -c "from db import init_db; init_db()"
 
 # frontend
 cd frontend && npm install
@@ -58,6 +59,7 @@ Open `http://localhost:3000`. API docs at `http://localhost:8000/docs`.
 | GET/POST/DELETE | `/api/weight` | `?days=30` |
 | GET/POST/DELETE/PATCH | `/api/exercise` | |
 | GET/PATCH | `/api/goals` | Partial update (singleton upsert) |
+| GET/PATCH | `/api/profile` | Biometric stats: age, sex, height, activity level (singleton) |
 
 ## MCP Server (stdio, port-less)
 
