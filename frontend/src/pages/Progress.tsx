@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Bar,
   BarChart,
@@ -14,6 +14,8 @@ import {
 } from 'recharts'
 import { apiClient } from '../api/client'
 import { useTheme } from '../hooks/useTheme'
+import { useProfile } from '../hooks/useProfile'
+import { mifflinTdee, type ActivityLevel, type Sex } from '../utils/mifflin'
 
 function useChartColors() {
   const { theme } = useTheme()
@@ -219,6 +221,14 @@ function diffPatch(form: FormState, base: Goals): Partial<Record<GoalField, numb
   return patch
 }
 
+const ACTIVITY_LABELS: Record<ActivityLevel, string> = {
+  sedentary: 'Sedentary',
+  lightly_active: 'Lightly Active',
+  moderately_active: 'Moderately Active',
+  very_active: 'Very Active',
+  extra_active: 'Extra Active',
+}
+
 export default function Progress() {
   const colors = useChartColors()
   const [goals, setGoals] = useState<Goals | null>(null)
@@ -230,6 +240,89 @@ export default function Progress() {
   const [weightError, setWeightError] = useState<string | null>(null)
   const [week, setWeek] = useState<WeekDay[] | null>(null)
   const [weekError, setWeekError] = useState<string | null>(null)
+
+  const { profile, updateProfile } = useProfile()
+
+  // Calculator form state — pre-filled from profile on load
+  const [calcSex, setCalcSex] = useState<Sex | ''>('')
+  const [calcAge, setCalcAge] = useState('')
+  const [calcHeight, setCalcHeight] = useState('')
+  const [calcActivity, setCalcActivity] = useState<ActivityLevel | ''>('')
+  const [calcWeight, setCalcWeight] = useState('')
+  const [calcSaving, setCalcSaving] = useState(false)
+  const [calcSavedAt, setCalcSavedAt] = useState<string | null>(null)
+  const [calcError, setCalcError] = useState<string | null>(null)
+  const [applyingGoal, setApplyingGoal] = useState(false)
+
+  // Pre-fill calculator when profile loads
+  useEffect(() => {
+    if (!profile) return
+    if (profile.sex) setCalcSex(profile.sex)
+    if (profile.age !== null) setCalcAge(String(profile.age))
+    if (profile.height_cm !== null) setCalcHeight(String(profile.height_cm))
+    if (profile.activity_level) setCalcActivity(profile.activity_level)
+  }, [profile])
+
+  // Derive latest weight from entries for the calculator; fallback to manual input
+  const latestWeight = entries && entries.length > 0 ? entries[entries.length - 1].weight_kg : null
+
+  // The effective weight for calculation
+  const effectiveWeight = latestWeight !== null ? latestWeight : (calcWeight.trim() !== '' ? Number(calcWeight) : null)
+
+  const suggestedKcal = useMemo(() => {
+    if (
+      calcSex === '' ||
+      calcAge.trim() === '' ||
+      calcHeight.trim() === '' ||
+      calcActivity === '' ||
+      effectiveWeight === null ||
+      Number.isNaN(effectiveWeight)
+    ) {
+      return null
+    }
+    return mifflinTdee({
+      sex: calcSex,
+      activity_level: calcActivity,
+      weight_kg: effectiveWeight,
+      height_cm: Number(calcHeight),
+      age: Number(calcAge),
+    })
+  }, [calcSex, calcAge, calcHeight, calcActivity, effectiveWeight])
+
+  async function handleSaveProfile(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setCalcSaving(true)
+    setCalcError(null)
+    try {
+      const updated = await updateProfile({
+        sex: calcSex || null,
+        age: calcAge.trim() !== '' ? Number(calcAge) : null,
+        height_cm: calcHeight.trim() !== '' ? Number(calcHeight) : null,
+        activity_level: calcActivity || null,
+      })
+      setCalcSavedAt(updated.updated_at)
+    } catch (err: unknown) {
+      setCalcError(err instanceof Error ? err.message : 'Failed to save profile')
+    } finally {
+      setCalcSaving(false)
+    }
+  }
+
+  async function handleApplyGoal() {
+    if (suggestedKcal === null) return
+    setApplyingGoal(true)
+    setError(null)
+    try {
+      const updated = await apiClient.patch<Goals>('/goals', { calorie_goal: suggestedKcal })
+      setGoals(updated)
+      setForm(goalsToForm(updated))
+      setSavedAt(updated.updated_at)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to apply goal')
+    } finally {
+      setApplyingGoal(false)
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -354,8 +447,121 @@ export default function Progress() {
           </p>
         )}
 
+        {/* Mifflin-St Jeor calorie calculator */}
+        <div className="mt-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+            Calorie calculator (Mifflin-St Jeor)
+          </h3>
+          <form onSubmit={handleSaveProfile} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="font-medium text-gray-700 dark:text-gray-300">Sex</span>
+              <select
+                value={calcSex}
+                onChange={(e) => setCalcSex(e.target.value as Sex | '')}
+                className="rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+              >
+                <option value="">Select…</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+            </label>
+
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="font-medium text-gray-700 dark:text-gray-300">Age (years)</span>
+              <input
+                type="number"
+                min={0}
+                step="1"
+                value={calcAge}
+                onChange={(e) => setCalcAge(e.target.value)}
+                className="rounded border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+              />
+            </label>
+
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="font-medium text-gray-700 dark:text-gray-300">Height (cm)</span>
+              <input
+                type="number"
+                min={0}
+                step="0.1"
+                value={calcHeight}
+                onChange={(e) => setCalcHeight(e.target.value)}
+                className="rounded border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+              />
+            </label>
+
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="font-medium text-gray-700 dark:text-gray-300">Activity level</span>
+              <select
+                value={calcActivity}
+                onChange={(e) => setCalcActivity(e.target.value as ActivityLevel | '')}
+                className="rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+              >
+                <option value="">Select…</option>
+                {(Object.entries(ACTIVITY_LABELS) as [ActivityLevel, string][]).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+            </label>
+
+            {latestWeight === null && (
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium text-gray-700 dark:text-gray-300">Weight (kg)</span>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.1"
+                  value={calcWeight}
+                  onChange={(e) => setCalcWeight(e.target.value)}
+                  placeholder="No weight logged yet"
+                  className="rounded border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+                />
+              </label>
+            )}
+
+            <div className="sm:col-span-2">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Suggested maintenance calories:{' '}
+                <strong className="text-gray-900 dark:text-gray-100" data-testid="suggested-kcal">
+                  {suggestedKcal !== null ? `${suggestedKcal} kcal` : '—'}
+                </strong>
+                {latestWeight !== null && (
+                  <span className="ml-2 text-xs text-gray-500 dark:text-gray-500">
+                    (using latest weight {latestWeight} kg)
+                  </span>
+                )}
+              </p>
+            </div>
+
+            {calcError && (
+              <p className="sm:col-span-2 text-sm text-red-600">{calcError}</p>
+            )}
+
+            <div className="sm:col-span-2 flex items-center gap-3">
+              <button
+                type="submit"
+                disabled={calcSaving}
+                className="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {calcSaving ? 'Saving…' : 'Save profile'}
+              </button>
+              <button
+                type="button"
+                disabled={suggestedKcal === null || applyingGoal}
+                onClick={handleApplyGoal}
+                className="rounded border border-indigo-600 px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950 disabled:opacity-50"
+              >
+                {applyingGoal ? 'Applying…' : 'Apply as goal'}
+              </button>
+              {calcSavedAt && !calcSaving && (
+                <span className="text-xs text-gray-500 dark:text-gray-400">Saved {calcSavedAt}</span>
+              )}
+            </div>
+          </form>
+        </div>
+
         {!form || !goals ? (
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Loading…</p>
+          <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">Loading…</p>
         ) : (
           <form onSubmit={handleSubmit} className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             {FIELDS.map(({ key, label, step, min }) => (

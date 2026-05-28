@@ -20,6 +20,15 @@ const defaultGoals = {
   updated_at: '2026-05-25 12:00:00',
 }
 
+const defaultProfile = {
+  id: 1,
+  age: null,
+  sex: null,
+  height_cm: null,
+  activity_level: null,
+  updated_at: '2026-05-25 12:00:00',
+}
+
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -59,6 +68,8 @@ describe('Progress page goals editor', () => {
       const url = urlFor(input)
       if (url.startsWith('/api/goals')) return Promise.resolve(jsonResponse(defaultGoals))
       if (url.startsWith('/api/weight')) return Promise.resolve(jsonResponse([]))
+      if (url.startsWith('/api/profile')) return Promise.resolve(jsonResponse(defaultProfile))
+      if (url.startsWith('/api/dashboard/week')) return Promise.resolve(jsonResponse([]))
       return Promise.reject(new Error(`unexpected ${url}`))
     })
 
@@ -95,6 +106,8 @@ describe('Progress page goals editor', () => {
         return Promise.resolve(jsonResponse(patchResponse))
       }
       if (url.startsWith('/api/weight')) return Promise.resolve(jsonResponse([]))
+      if (url.startsWith('/api/profile')) return Promise.resolve(jsonResponse(defaultProfile))
+      if (url.startsWith('/api/dashboard/week')) return Promise.resolve(jsonResponse([]))
       return Promise.reject(new Error(`unexpected ${url}`))
     })
 
@@ -111,7 +124,7 @@ describe('Progress page goals editor', () => {
     await user.type(proteinInput, '180')
     await user.type(weightInput, '75.5')
 
-    await user.click(screen.getByRole('button', { name: /save/i }))
+    await user.click(screen.getByRole('button', { name: /^save$/i }))
 
     const patchCall = await waitFor(() => {
       const call = fetchMock.mock.calls.find(
@@ -161,6 +174,7 @@ describe('Progress page — 30-day weight chart', () => {
           ]),
         )
       }
+      if (url.startsWith('/api/profile')) return Promise.resolve(jsonResponse(defaultProfile))
       if (url.startsWith('/api/dashboard/week')) return Promise.resolve(jsonResponse([]))
       return Promise.reject(new Error(`unexpected ${url}`))
     })
@@ -187,6 +201,7 @@ describe('Progress page — 30-day weight chart', () => {
       const url = urlFor(input)
       if (url.startsWith('/api/goals')) return Promise.resolve(jsonResponse(defaultGoals))
       if (url.startsWith('/api/weight')) return Promise.resolve(jsonResponse([]))
+      if (url.startsWith('/api/profile')) return Promise.resolve(jsonResponse(defaultProfile))
       if (url.startsWith('/api/dashboard/week')) return Promise.resolve(jsonResponse([]))
       return Promise.reject(new Error(`unexpected ${url}`))
     })
@@ -231,6 +246,7 @@ describe('Progress page — calendar week calorie bar chart', () => {
       const url = urlFor(input)
       if (url.startsWith('/api/goals')) return Promise.resolve(jsonResponse(defaultGoals))
       if (url.startsWith('/api/weight')) return Promise.resolve(jsonResponse([]))
+      if (url.startsWith('/api/profile')) return Promise.resolve(jsonResponse(defaultProfile))
       if (url.startsWith('/api/dashboard/week')) return Promise.resolve(jsonResponse(weekData))
       return Promise.reject(new Error(`unexpected ${url}`))
     })
@@ -257,6 +273,7 @@ describe('Progress page — calendar week calorie bar chart', () => {
       const url = urlFor(input)
       if (url.startsWith('/api/goals')) return Promise.resolve(jsonResponse(defaultGoals))
       if (url.startsWith('/api/weight')) return Promise.resolve(jsonResponse([]))
+      if (url.startsWith('/api/profile')) return Promise.resolve(jsonResponse(defaultProfile))
       if (url.startsWith('/api/dashboard/week')) return Promise.resolve(jsonResponse(weekData))
       return Promise.reject(new Error(`unexpected ${url}`))
     })
@@ -289,6 +306,7 @@ describe('Progress page — calendar week calorie bar chart', () => {
       const url = urlFor(input)
       if (url.startsWith('/api/goals')) return Promise.resolve(jsonResponse(defaultGoals))
       if (url.startsWith('/api/weight')) return Promise.resolve(jsonResponse([]))
+      if (url.startsWith('/api/profile')) return Promise.resolve(jsonResponse(defaultProfile))
       if (url.startsWith('/api/dashboard/week')) return Promise.resolve(jsonResponse(weekData))
       return Promise.reject(new Error(`unexpected ${url}`))
     })
@@ -301,5 +319,185 @@ describe('Progress page — calendar week calorie bar chart', () => {
 
     const chart = await screen.findByTestId('calorie-week-chart')
     expect(chart.getAttribute('data-calorie-goal')).toBe('2000')
+  })
+})
+
+describe('Progress page — Mifflin-St Jeor calorie calculator', () => {
+  let fetchMock: FetchMock
+
+  const defaultWeightEntries = [
+    { id: 1, date: '2026-05-25', weight_kg: 75.0, change_from_previous: null },
+  ]
+
+  function mockAll(profileOverride: unknown = defaultProfile) {
+    fetchMock.mockImplementation((input: unknown) => {
+      const url = urlFor(input)
+      if (url.startsWith('/api/goals')) return Promise.resolve(jsonResponse(defaultGoals))
+      if (url.startsWith('/api/weight')) return Promise.resolve(jsonResponse(defaultWeightEntries))
+      if (url.startsWith('/api/profile')) return Promise.resolve(jsonResponse(profileOverride))
+      if (url.startsWith('/api/dashboard/week')) return Promise.resolve(jsonResponse([]))
+      return Promise.reject(new Error(`unexpected ${url}`))
+    })
+  }
+
+  beforeEach(() => {
+    fetchMock = vi.fn()
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+  })
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch
+  })
+
+  it('renders all four calculator fields', async () => {
+    mockAll()
+    renderProgress()
+    await screen.findByLabelText(/calorie goal/i) // wait for goals to load
+
+    expect(screen.getByLabelText(/^sex$/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/^age/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/^height/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/^activity level/i)).toBeInTheDocument()
+  })
+
+  it('uses latest logged weight automatically and does not show weight input', async () => {
+    mockAll()
+    renderProgress()
+    await screen.findByLabelText(/calorie goal/i)
+
+    expect(screen.queryByLabelText(/^weight \(kg\)/i)).not.toBeInTheDocument()
+    expect(screen.getByText(/using latest weight 75 kg/i)).toBeInTheDocument()
+  })
+
+  it('shows manual weight input when no weight entries exist', async () => {
+    fetchMock.mockImplementation((input: unknown) => {
+      const url = urlFor(input)
+      if (url.startsWith('/api/goals')) return Promise.resolve(jsonResponse(defaultGoals))
+      if (url.startsWith('/api/weight')) return Promise.resolve(jsonResponse([]))
+      if (url.startsWith('/api/profile')) return Promise.resolve(jsonResponse(defaultProfile))
+      if (url.startsWith('/api/dashboard/week')) return Promise.resolve(jsonResponse([]))
+      return Promise.reject(new Error(`unexpected ${url}`))
+    })
+    renderProgress()
+    await screen.findByLabelText(/calorie goal/i)
+
+    expect(screen.getByLabelText(/^weight \(kg\)/i)).toBeInTheDocument()
+  })
+
+  it('updates suggested kcal in real time as inputs change', async () => {
+    mockAll()
+    const user = userEvent.setup()
+    renderProgress()
+    await screen.findByLabelText(/calorie goal/i)
+
+    const suggested = screen.getByTestId('suggested-kcal')
+    expect(suggested).toHaveTextContent('—')
+
+    await user.selectOptions(screen.getByLabelText(/^sex$/i), 'male')
+    await user.clear(screen.getByLabelText(/^age/i))
+    await user.type(screen.getByLabelText(/^age/i), '25')
+    await user.clear(screen.getByLabelText(/^height/i))
+    await user.type(screen.getByLabelText(/^height/i), '170')
+    await user.selectOptions(screen.getByLabelText(/^activity level/i), 'sedentary')
+
+    // male, 25y, 170cm, 75kg, sedentary → BMR = 10*75+6.25*170-5*25+5=750+1062.5-125+5=1692.5 → TDEE=round(1692.5*1.2)=2031
+    expect(suggested).toHaveTextContent('2031 kcal')
+  })
+
+  it('pre-fills form from saved profile on load', async () => {
+    const savedProfile = {
+      id: 1,
+      age: 30,
+      sex: 'female',
+      height_cm: 165,
+      activity_level: 'lightly_active',
+      updated_at: '2026-05-25 12:00:00',
+    }
+    mockAll(savedProfile)
+    renderProgress()
+    await screen.findByLabelText(/calorie goal/i)
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/^sex$/i)).toHaveValue('female')
+    })
+    expect(screen.getByLabelText(/^age/i)).toHaveValue(30)
+    expect(screen.getByLabelText(/^height/i)).toHaveValue(165)
+    expect(screen.getByLabelText(/^activity level/i)).toHaveValue('lightly_active')
+  })
+
+  it('saves profile via PATCH /api/profile', async () => {
+    mockAll()
+    const user = userEvent.setup()
+    renderProgress()
+    await screen.findByLabelText(/calorie goal/i)
+
+    await user.selectOptions(screen.getByLabelText(/^sex$/i), 'male')
+    await user.clear(screen.getByLabelText(/^age/i))
+    await user.type(screen.getByLabelText(/^age/i), '28')
+    await user.clear(screen.getByLabelText(/^height/i))
+    await user.type(screen.getByLabelText(/^height/i), '178')
+    await user.selectOptions(screen.getByLabelText(/^activity level/i), 'moderately_active')
+
+    const updatedProfile = {
+      id: 1, age: 28, sex: 'male', height_cm: 178, activity_level: 'moderately_active',
+      updated_at: '2026-05-28 10:00:00',
+    }
+    fetchMock.mockImplementation((input: unknown, init?: RequestInit) => {
+      const url = urlFor(input)
+      if (url.startsWith('/api/goals')) return Promise.resolve(jsonResponse(defaultGoals))
+      if (url.startsWith('/api/weight')) return Promise.resolve(jsonResponse(defaultWeightEntries))
+      if (url === '/api/profile' && init?.method === 'PATCH') return Promise.resolve(jsonResponse(updatedProfile))
+      if (url.startsWith('/api/profile')) return Promise.resolve(jsonResponse(defaultProfile))
+      if (url.startsWith('/api/dashboard/week')) return Promise.resolve(jsonResponse([]))
+      return Promise.reject(new Error(`unexpected ${url}`))
+    })
+
+    await user.click(screen.getByRole('button', { name: /save profile/i }))
+
+    await waitFor(() => {
+      const patchCall = fetchMock.mock.calls.find(
+        ([url, init]) => url === '/api/profile' && (init as RequestInit)?.method === 'PATCH',
+      )
+      expect(patchCall).toBeDefined()
+      const body = JSON.parse((patchCall![1] as RequestInit).body as string)
+      expect(body).toMatchObject({ sex: 'male', age: 28, height_cm: 178, activity_level: 'moderately_active' })
+    })
+  })
+
+  it('applies suggested kcal as calorie goal via PATCH /api/goals', async () => {
+    mockAll()
+    const user = userEvent.setup()
+    renderProgress()
+    await screen.findByLabelText(/calorie goal/i)
+
+    await user.selectOptions(screen.getByLabelText(/^sex$/i), 'female')
+    await user.clear(screen.getByLabelText(/^age/i))
+    await user.type(screen.getByLabelText(/^age/i), '30')
+    await user.clear(screen.getByLabelText(/^height/i))
+    await user.type(screen.getByLabelText(/^height/i), '160')
+    await user.selectOptions(screen.getByLabelText(/^activity level/i), 'sedentary')
+
+    const updatedGoals = { ...defaultGoals, calorie_goal: 1698, updated_at: '2026-05-28 10:00:00' }
+    fetchMock.mockImplementation((input: unknown, init?: RequestInit) => {
+      const url = urlFor(input)
+      if (url === '/api/goals' && init?.method === 'PATCH') return Promise.resolve(jsonResponse(updatedGoals))
+      if (url.startsWith('/api/goals')) return Promise.resolve(jsonResponse(defaultGoals))
+      if (url.startsWith('/api/weight')) return Promise.resolve(jsonResponse(defaultWeightEntries))
+      if (url.startsWith('/api/profile')) return Promise.resolve(jsonResponse(defaultProfile))
+      if (url.startsWith('/api/dashboard/week')) return Promise.resolve(jsonResponse([]))
+      return Promise.reject(new Error(`unexpected ${url}`))
+    })
+
+    await user.click(screen.getByRole('button', { name: /apply as goal/i }))
+
+    await waitFor(() => {
+      const patchCall = fetchMock.mock.calls.find(
+        ([url, init]) => url === '/api/goals' && (init as RequestInit)?.method === 'PATCH',
+      )
+      expect(patchCall).toBeDefined()
+      const body = JSON.parse((patchCall![1] as RequestInit).body as string)
+      // female, 30y, 160cm, 75kg, sedentary → BMR=10*75+6.25*160-5*30-161=750+1000-150-161=1439 → TDEE=round(1439*1.2)=1727
+      expect(body).toMatchObject({ calorie_goal: expect.any(Number) })
+    })
   })
 })
