@@ -5,6 +5,7 @@ import Exercise from './pages/Exercise'
 import Progress from './pages/Progress'
 import History from './pages/History'
 import ThemeToggle from './components/ThemeToggle'
+import { ThemeProvider } from './hooks/useTheme'
 
 type NavItem = { to: string; label: string; end?: boolean }
 
@@ -61,8 +62,10 @@ export function AppRoutes() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
+    <ThemeProvider>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </ThemeProvider>
   )
 }

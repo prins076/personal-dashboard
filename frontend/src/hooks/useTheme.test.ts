@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, renderHook } from '@testing-library/react'
-import { useTheme } from './useTheme'
+import { ThemeProvider, useTheme } from './useTheme'
 
 function stubMatchMedia(prefersDark: boolean) {
   vi.stubGlobal(
@@ -51,7 +51,7 @@ describe('useTheme', () => {
     stubLocalStorage({})
     stubMatchMedia(true)
 
-    const { result } = renderHook(() => useTheme())
+    const { result } = renderHook(() => useTheme(), { wrapper: ThemeProvider })
 
     expect(result.current.theme).toBe('dark')
     expect(document.documentElement.classList.contains('dark')).toBe(true)
@@ -61,7 +61,7 @@ describe('useTheme', () => {
     stubLocalStorage({ theme: 'light' })
     stubMatchMedia(true)
 
-    const { result } = renderHook(() => useTheme())
+    const { result } = renderHook(() => useTheme(), { wrapper: ThemeProvider })
 
     expect(result.current.theme).toBe('light')
     expect(document.documentElement.classList.contains('dark')).toBe(false)
@@ -71,7 +71,7 @@ describe('useTheme', () => {
     const store = stubLocalStorage({})
     stubMatchMedia(false)
 
-    const { result } = renderHook(() => useTheme())
+    const { result } = renderHook(() => useTheme(), { wrapper: ThemeProvider })
 
     expect(result.current.theme).toBe('light')
     expect(document.documentElement.classList.contains('dark')).toBe(false)

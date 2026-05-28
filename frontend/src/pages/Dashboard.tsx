@@ -159,6 +159,11 @@ function MacroPie({
   carbs: number
   fat: number
 }) {
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
+  const tooltipStyle = isDark
+    ? { backgroundColor: '#1f2937', border: '1px solid #374151', color: '#f3f4f6' }
+    : { backgroundColor: '#ffffff', border: '1px solid #e5e7eb', color: '#111827' }
   const data = [
     { name: 'Protein', value: protein, color: MACRO_COLORS.protein },
     { name: 'Carbs', value: carbs, color: MACRO_COLORS.carbs },
@@ -183,7 +188,7 @@ function MacroPie({
                   <Cell key={entry.name} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip contentStyle={tooltipStyle} itemStyle={{ color: tooltipStyle.color }} />
             </PieChart>
           </ResponsiveContainer>
         )}
