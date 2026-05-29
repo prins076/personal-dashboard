@@ -88,7 +88,11 @@ export function CalorieWeekChart({ calorieGoal }: { calorieGoal: number | null }
 
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
 
-      {week !== null && (
+      {week !== null && week.length === 0 && (
+        <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">No data for this week.</p>
+      )}
+
+      {week !== null && week.length > 0 && (
         <>
           <div
             data-testid="calorie-week-chart"
