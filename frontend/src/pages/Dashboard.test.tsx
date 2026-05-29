@@ -634,4 +634,109 @@ describe('Dashboard page', () => {
       expect(screen.getByRole('dialog')).toBeInTheDocument()
     })
   })
+
+  describe('FAB Nutrition modal', () => {
+    it('selecting Nutrition from FAB opens the food entry modal', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse(dashboardResponse()))
+      const user = userEvent.setup()
+      render(<Dashboard />)
+
+      await user.click(screen.getByRole('button', { name: /add entry/i }))
+      await user.click(screen.getByRole('button', { name: /^nutrition$/i }))
+
+      expect(await screen.findByRole('heading', { name: /add food/i })).toBeInTheDocument()
+    })
+
+    it('Nutrition modal closes when the X button is clicked', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse(dashboardResponse()))
+      const user = userEvent.setup()
+      render(<Dashboard />)
+
+      await user.click(screen.getByRole('button', { name: /add entry/i }))
+      await user.click(screen.getByRole('button', { name: /^nutrition$/i }))
+      expect(await screen.findByRole('heading', { name: /add food/i })).toBeInTheDocument()
+
+      await user.click(screen.getByRole('button', { name: /close modal/i }))
+      expect(screen.queryByRole('heading', { name: /add food/i })).not.toBeInTheDocument()
+    })
+  })
+
+  describe('FAB Exercise modal', () => {
+    it('selecting Exercise from FAB opens the exercise entry modal', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse(dashboardResponse()))
+      const user = userEvent.setup()
+      render(<Dashboard />)
+
+      await user.click(screen.getByRole('button', { name: /add entry/i }))
+      await user.click(screen.getByRole('button', { name: /^exercise$/i }))
+
+      expect(await screen.findByRole('heading', { name: /add exercise/i })).toBeInTheDocument()
+    })
+
+    it('Exercise modal closes when cancel is clicked', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse(dashboardResponse()))
+      const user = userEvent.setup()
+      render(<Dashboard />)
+
+      await user.click(screen.getByRole('button', { name: /add entry/i }))
+      await user.click(screen.getByRole('button', { name: /^exercise$/i }))
+      expect(await screen.findByRole('heading', { name: /add exercise/i })).toBeInTheDocument()
+
+      await user.click(screen.getByRole('button', { name: /cancel/i }))
+      expect(screen.queryByRole('heading', { name: /add exercise/i })).not.toBeInTheDocument()
+    })
+  })
+
+  describe('FAB Water popover', () => {
+    it('selecting Water from FAB shows quick-add water buttons', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse(dashboardResponse()))
+      const user = userEvent.setup()
+      render(<Dashboard />)
+
+      await user.click(screen.getByRole('button', { name: /add entry/i }))
+      await user.click(screen.getByRole('button', { name: /^water$/i }))
+
+      const popover = screen.getByTestId('water-quick-add-popover')
+      expect(within(popover).getByRole('button', { name: /\+150ml/i })).toBeInTheDocument()
+      expect(within(popover).getByRole('button', { name: /\+250ml/i })).toBeInTheDocument()
+      expect(within(popover).getByRole('button', { name: /\+500ml/i })).toBeInTheDocument()
+    })
+
+    it('clicking a water quick-add button closes the popover and logs water', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse(dashboardResponse()))
+      fetchMock.mockResolvedValueOnce(
+        jsonResponse({ entry: { id: 1, date: '2026-05-29', amount_ml: 250, notes: null, logged_at: null }, daily_total_ml: 250 }),
+      )
+      fetchMock.mockResolvedValueOnce(jsonResponse(dashboardResponse()))
+
+      const user = userEvent.setup()
+      render(<Dashboard />)
+
+      await user.click(screen.getByRole('button', { name: /add entry/i }))
+      await user.click(screen.getByRole('button', { name: /^water$/i }))
+
+      const popover = screen.getByTestId('water-quick-add-popover')
+      await user.click(within(popover).getByRole('button', { name: /\+250ml/i }))
+
+      await waitFor(() => expect(screen.queryByTestId('water-quick-add-popover')).not.toBeInTheDocument())
+
+      const waterCalls = fetchMock.mock.calls.filter(
+        ([url, init]) => urlFor(url) === '/api/water' && (init as RequestInit)?.method === 'POST',
+      )
+      expect(waterCalls.length).toBe(1)
+    })
+
+    it('clicking outside the water popover closes it', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse(dashboardResponse()))
+      const user = userEvent.setup()
+      render(<Dashboard />)
+
+      await user.click(screen.getByRole('button', { name: /add entry/i }))
+      await user.click(screen.getByRole('button', { name: /^water$/i }))
+      expect(screen.getByTestId('water-quick-add-popover')).toBeInTheDocument()
+
+      await user.click(screen.getByTestId('water-popover-backdrop'))
+      expect(screen.queryByTestId('water-quick-add-popover')).not.toBeInTheDocument()
+    })
+  })
 })

@@ -28,7 +28,7 @@ type AddModalProps = {
   onCreated: (entry: ExerciseEntry) => void
 }
 
-function AddExerciseModal({ onClose, onCreated }: AddModalProps) {
+export function AddExerciseModal({ onClose, onCreated }: AddModalProps) {
   const [name, setName] = useState('')
   const [category, setCategory] = useState<ExerciseCategory>('cardio')
   const [durationMin, setDurationMin] = useState('')

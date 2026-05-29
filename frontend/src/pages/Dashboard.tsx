@@ -3,6 +3,8 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import { apiClient } from '../api/client'
 import { MEAL_TYPES, type MealEntry, type MealType } from '../api/meals'
 import { createWeight } from '../api/weight'
+import { AddFoodModal } from './Nutrition'
+import { AddExerciseModal } from './Exercise'
 import { useTheme } from '../hooks/useTheme'
 
 function todayIso(): string {
@@ -481,6 +483,49 @@ function ExerciseSummary({ data }: { data: DashboardExercise }) {
   )
 }
 
+function WaterQuickAddPopover({
+  onAdd,
+  onClose,
+}: {
+  onAdd: (amount: number) => void
+  onClose: () => void
+}) {
+  return (
+    <>
+      <div
+        data-testid="water-popover-backdrop"
+        className="fixed inset-0 z-50"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div
+        data-testid="water-quick-add-popover"
+        role="dialog"
+        aria-label="Quick add water"
+        className="fixed bottom-24 right-6 rounded-lg bg-white dark:bg-gray-800 p-4 shadow-xl border border-gray-200 dark:border-gray-700"
+        style={{ zIndex: 51 }}
+      >
+        <p className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">Add water</p>
+        <div className="flex gap-2">
+          {QUICK_ADD_AMOUNTS.map((amount) => (
+            <button
+              key={amount}
+              type="button"
+              onClick={() => {
+                onAdd(amount)
+                onClose()
+              }}
+              className="rounded-md border border-sky-300 bg-sky-50 px-3 py-1 text-sm font-medium text-sky-700 hover:bg-sky-100 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300 dark:hover:bg-sky-900"
+            >
+              +{amount}ml
+            </button>
+          ))}
+        </div>
+      </div>
+    </>
+  )
+}
+
 const FAB_OPTIONS = ['Nutrition', 'Water', 'Exercise', 'Weight'] as const
 type FabOption = (typeof FAB_OPTIONS)[number]
 
@@ -695,9 +740,15 @@ export default function Dashboard() {
   )
 
   const [weightModalOpen, setWeightModalOpen] = useState(false)
+  const [nutritionModalOpen, setNutritionModalOpen] = useState(false)
+  const [exerciseModalOpen, setExerciseModalOpen] = useState(false)
+  const [waterPopoverOpen, setWaterPopoverOpen] = useState(false)
 
   function handleFabSelect(option: FabOption) {
     if (option === 'Weight') setWeightModalOpen(true)
+    else if (option === 'Nutrition') setNutritionModalOpen(true)
+    else if (option === 'Exercise') setExerciseModalOpen(true)
+    else if (option === 'Water') setWaterPopoverOpen(true)
   }
 
   return (
@@ -755,6 +806,30 @@ export default function Dashboard() {
             setWeightModalOpen(false)
             void refresh()
           }}
+        />
+      )}
+      {nutritionModalOpen && (
+        <AddFoodModal
+          onClose={() => setNutritionModalOpen(false)}
+          onCreated={() => {
+            setNutritionModalOpen(false)
+            void refresh()
+          }}
+        />
+      )}
+      {exerciseModalOpen && (
+        <AddExerciseModal
+          onClose={() => setExerciseModalOpen(false)}
+          onCreated={() => {
+            setExerciseModalOpen(false)
+            void refresh()
+          }}
+        />
+      )}
+      {waterPopoverOpen && (
+        <WaterQuickAddPopover
+          onAdd={(amount) => void addWater(amount)}
+          onClose={() => setWaterPopoverOpen(false)}
         />
       )}
     </>

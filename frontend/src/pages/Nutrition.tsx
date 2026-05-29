@@ -41,7 +41,7 @@ type AddFoodModalProps = {
 
 type Step = 'search' | 'edit'
 
-function AddFoodModal({ onClose, onCreated }: AddFoodModalProps) {
+export function AddFoodModal({ onClose, onCreated }: AddFoodModalProps) {
   const [step, setStep] = useState<Step>('search')
 
   // Search step state
