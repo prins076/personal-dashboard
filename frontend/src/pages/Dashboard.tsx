@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import { apiClient } from '../api/client'
 import { MEAL_TYPES, type MealEntry, type MealType } from '../api/meals'
@@ -71,7 +71,15 @@ function formatLabel(type: MealType): string {
   return type.charAt(0).toUpperCase() + type.slice(1)
 }
 
-function CalorieRing({ current, goal }: { current: number; goal: number | null }) {
+function CalorieRing({
+  current,
+  goal,
+  onSaveGoal,
+}: {
+  current: number
+  goal: number | null
+  onSaveGoal: (goal: number) => Promise<void>
+}) {
   const { theme } = useTheme()
   const isDark = theme === 'dark'
   const trackColor = isDark ? '#374151' : '#e5e7eb'
@@ -80,6 +88,46 @@ function CalorieRing({ current, goal }: { current: number; goal: number | null }
   const target = goal ?? 0
   const percentage =
     target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0
+  const [editing, setEditing] = useState(false)
+  const [value, setValue] = useState(String(target))
+  const [saving, setSaving] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const open = () => {
+    setValue(String(target))
+    setEditing(true)
+  }
+
+  useEffect(() => {
+    if (!editing) return
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setEditing(false)
+    }
+    function onMouseDown(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setEditing(false)
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    document.addEventListener('mousedown', onMouseDown)
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      document.removeEventListener('mousedown', onMouseDown)
+    }
+  }, [editing])
+
+  const submit = async () => {
+    const next = Number(value)
+    if (!Number.isFinite(next) || next <= 0) return
+    setSaving(true)
+    try {
+      await onSaveGoal(next)
+      setEditing(false)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const radius = 56
   const stroke = 10
   const circumference = 2 * Math.PI * radius
@@ -135,11 +183,67 @@ function CalorieRing({ current, goal }: { current: number; goal: number | null }
           of goal
         </text>
       </svg>
-      <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+      <div
+        ref={containerRef}
+        className="relative mt-2 flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400"
+      >
         <span data-testid="calorie-current">{Math.round(current)}</span>
-        {' / '}
-        <span data-testid="calorie-goal">{target}</span> kcal
-      </p>
+        <span>/</span>
+        <span data-testid="calorie-goal">{target}</span>
+        <span>kcal</span>
+        <button
+          type="button"
+          aria-label="Edit calorie goal"
+          onClick={open}
+          className="ml-1 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+        >
+          <svg
+            width={14}
+            height={14}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M12 20h9" />
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+          </svg>
+        </button>
+        {editing && (
+          <div
+            role="dialog"
+            aria-label="Edit calorie goal"
+            className="absolute left-1/2 top-full z-10 mt-2 flex -translate-x-1/2 items-center gap-2 rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+          >
+            <input
+              type="number"
+              min={1}
+              aria-label="Calorie goal"
+              autoFocus
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  void submit()
+                }
+              }}
+              className="w-24 rounded border border-gray-300 px-2 py-1 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+            />
+            <button
+              type="button"
+              onClick={() => void submit()}
+              disabled={saving}
+              className="rounded-md bg-indigo-600 px-3 py-1 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
+            >
+              Save
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -390,6 +494,13 @@ export default function Dashboard() {
     void refresh()
   }, [refresh])
 
+  const saveCalorieGoal = useCallback(async (calorie_goal: number) => {
+    const updated = await apiClient.patch<DashboardGoals>('/goals', {
+      calorie_goal,
+    })
+    setData((prev) => (prev ? { ...prev, goals: updated } : prev))
+  }, [])
+
   const addWater = useCallback(
     async (amount_ml: number) => {
       setBusy(true)
@@ -426,6 +537,7 @@ export default function Dashboard() {
                 <CalorieRing
                   current={data.totals.calories}
                   goal={data.goals?.calorie_goal ?? null}
+                  onSaveGoal={saveCalorieGoal}
                 />
               </div>
             </section>

@@ -166,6 +166,173 @@ describe('Dashboard page', () => {
     expect(ring).toHaveAttribute('aria-valuenow', '25')
   })
 
+  it('renders a pencil icon to edit the calorie goal', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(dashboardResponse()))
+
+    render(<Dashboard />)
+
+    const ring = await screen.findByTestId('calorie-ring')
+    expect(
+      within(ring).getByRole('button', { name: /edit calorie goal/i }),
+    ).toBeInTheDocument()
+  })
+
+  it('opens a popover pre-filled with the current goal when the pencil is clicked', async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(dashboardResponse({ goals: { calorie_goal: 2000 } })),
+    )
+
+    const user = userEvent.setup()
+    render(<Dashboard />)
+
+    const ring = await screen.findByTestId('calorie-ring')
+    await user.click(within(ring).getByRole('button', { name: /edit calorie goal/i }))
+
+    const input = screen.getByRole('spinbutton', { name: /calorie goal/i })
+    expect(input).toHaveValue(2000)
+  })
+
+  it('saves a new goal: PATCHes /api/goals, closes the popover, and updates the ring', async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        jsonResponse(dashboardResponse({ goals: { calorie_goal: 2000 } })),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          id: 1,
+          calorie_goal: 2500,
+          protein_goal_g: 150,
+          carbs_goal_g: 200,
+          fat_goal_g: 65,
+          fiber_goal_g: 30,
+          water_goal_ml: 2500,
+          weight_goal_kg: null,
+          updated_at: '2026-05-26 10:00:00',
+        }),
+      )
+
+    const user = userEvent.setup()
+    render(<Dashboard />)
+
+    const ring = await screen.findByTestId('calorie-ring')
+    await user.click(within(ring).getByRole('button', { name: /edit calorie goal/i }))
+
+    const input = screen.getByRole('spinbutton', { name: /calorie goal/i })
+    await user.clear(input)
+    await user.type(input, '2500')
+    await user.click(screen.getByRole('button', { name: /^save$/i }))
+
+    // PATCH /api/goals with the new calorie_goal
+    await waitFor(() => {
+      const patchCall = fetchMock.mock.calls.find(
+        ([url, init]) =>
+          urlFor(url) === '/api/goals' &&
+          (init as RequestInit | undefined)?.method === 'PATCH',
+      )
+      expect(patchCall).toBeDefined()
+      expect(JSON.parse((patchCall![1] as RequestInit).body as string)).toEqual({
+        calorie_goal: 2500,
+      })
+    })
+
+    // Popover closed
+    await waitFor(() => {
+      expect(screen.queryByRole('spinbutton', { name: /calorie goal/i })).not.toBeInTheDocument()
+    })
+
+    // Ring reflects the new goal — no reload
+    expect(within(ring).getByTestId('calorie-goal')).toHaveTextContent(/2500/)
+    const dashCalls = fetchMock.mock.calls.filter(([url]) =>
+      urlFor(url).startsWith('/api/dashboard/today'),
+    )
+    expect(dashCalls.length).toBe(1)
+  })
+
+  it('submits the goal when Enter is pressed in the input', async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        jsonResponse(dashboardResponse({ goals: { calorie_goal: 2000 } })),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse(
+          dashboardResponse({ goals: { calorie_goal: 1800 } }).goals,
+        ),
+      )
+
+    const user = userEvent.setup()
+    render(<Dashboard />)
+
+    const ring = await screen.findByTestId('calorie-ring')
+    await user.click(within(ring).getByRole('button', { name: /edit calorie goal/i }))
+
+    const input = screen.getByRole('spinbutton', { name: /calorie goal/i })
+    await user.clear(input)
+    await user.type(input, '1800{Enter}')
+
+    await waitFor(() => {
+      const patchCall = fetchMock.mock.calls.find(
+        ([url, init]) =>
+          urlFor(url) === '/api/goals' &&
+          (init as RequestInit | undefined)?.method === 'PATCH',
+      )
+      expect(patchCall).toBeDefined()
+    })
+    expect(within(ring).getByTestId('calorie-goal')).toHaveTextContent(/1800/)
+  })
+
+  it('closes the popover without saving when Escape is pressed', async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(dashboardResponse({ goals: { calorie_goal: 2000 } })),
+    )
+
+    const user = userEvent.setup()
+    render(<Dashboard />)
+
+    const ring = await screen.findByTestId('calorie-ring')
+    await user.click(within(ring).getByRole('button', { name: /edit calorie goal/i }))
+    expect(screen.getByRole('spinbutton', { name: /calorie goal/i })).toBeInTheDocument()
+
+    await user.keyboard('{Escape}')
+
+    await waitFor(() => {
+      expect(screen.queryByRole('spinbutton', { name: /calorie goal/i })).not.toBeInTheDocument()
+    })
+    // No PATCH happened
+    expect(
+      fetchMock.mock.calls.find(
+        ([url, init]) =>
+          urlFor(url) === '/api/goals' &&
+          (init as RequestInit | undefined)?.method === 'PATCH',
+      ),
+    ).toBeUndefined()
+  })
+
+  it('closes the popover without saving when clicking outside', async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(dashboardResponse({ goals: { calorie_goal: 2000 } })),
+    )
+
+    const user = userEvent.setup()
+    render(<Dashboard />)
+
+    const ring = await screen.findByTestId('calorie-ring')
+    await user.click(within(ring).getByRole('button', { name: /edit calorie goal/i }))
+    expect(screen.getByRole('spinbutton', { name: /calorie goal/i })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('heading', { name: /dashboard/i }))
+
+    await waitFor(() => {
+      expect(screen.queryByRole('spinbutton', { name: /calorie goal/i })).not.toBeInTheDocument()
+    })
+    expect(
+      fetchMock.mock.calls.find(
+        ([url, init]) =>
+          urlFor(url) === '/api/goals' &&
+          (init as RequestInit | undefined)?.method === 'PATCH',
+      ),
+    ).toBeUndefined()
+  })
+
   it('renders the macro pie chart with one slice per macro', async () => {
     fetchMock.mockResolvedValueOnce(
       jsonResponse(
