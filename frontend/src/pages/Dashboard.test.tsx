@@ -552,4 +552,86 @@ describe('Dashboard page', () => {
       expect(screen.queryByRole('button', { name: /^nutrition$/i })).not.toBeInTheDocument()
     })
   })
+
+  describe('Weight entry modal', () => {
+    async function openWeightModal(user: ReturnType<typeof userEvent.setup>) {
+      await user.click(screen.getByRole('button', { name: /add entry/i }))
+      await user.click(screen.getByRole('button', { name: /^weight$/i }))
+    }
+
+    it('selecting Weight from the FAB opens the weight entry modal', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse(dashboardResponse()))
+      const user = userEvent.setup()
+      render(<Dashboard />)
+
+      await openWeightModal(user)
+
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
+      expect(screen.getByLabelText(/weight.*kg/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/date/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/notes/i)).toBeInTheDocument()
+    })
+
+    it('cancel button closes the weight modal', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse(dashboardResponse()))
+      const user = userEvent.setup()
+      render(<Dashboard />)
+
+      await openWeightModal(user)
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+      await user.click(screen.getByRole('button', { name: /cancel/i }))
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    })
+
+    it('successful submit closes the modal and refreshes the dashboard', async () => {
+      const weightEntry = { id: 1, date: '2026-05-29', weight_kg: 78.5, notes: null, logged_at: '2026-05-29 10:00:00' }
+      fetchMock.mockResolvedValueOnce(jsonResponse(dashboardResponse()))
+      fetchMock.mockResolvedValueOnce(
+        new Response(JSON.stringify(weightEntry), {
+          status: 201,
+          headers: { 'content-type': 'application/json' },
+        }),
+      )
+      fetchMock.mockResolvedValueOnce(
+        jsonResponse(dashboardResponse({ weight: { latest: weightEntry, change_from_previous: null } })),
+      )
+
+      const user = userEvent.setup()
+      render(<Dashboard />)
+
+      await openWeightModal(user)
+      await user.type(screen.getByLabelText(/weight.*kg/i), '78.5')
+      await user.click(screen.getByRole('button', { name: /^save$/i }))
+
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+
+      const postCalls = fetchMock.mock.calls.filter(
+        ([url, init]) => urlFor(url) === '/api/weight' && (init as RequestInit)?.method === 'POST',
+      )
+      expect(postCalls.length).toBe(1)
+    })
+
+    it('409 conflict shows message directing user to History', async () => {
+      const existing = { id: 1, date: '2026-05-29', weight_kg: 80.0, notes: null, logged_at: null }
+      fetchMock.mockResolvedValueOnce(jsonResponse(dashboardResponse()))
+      fetchMock.mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: 'DATE_ALREADY_LOGGED', existing }), {
+          status: 409,
+          headers: { 'content-type': 'application/json' },
+        }),
+      )
+
+      const user = userEvent.setup()
+      render(<Dashboard />)
+
+      await openWeightModal(user)
+      await user.type(screen.getByLabelText(/weight.*kg/i), '79')
+      await user.click(screen.getByRole('button', { name: /^save$/i }))
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(/weight already logged/i)
+      expect(screen.getByRole('alert')).toHaveTextContent(/history/i)
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
+    })
+  })
 })
