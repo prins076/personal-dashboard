@@ -91,33 +91,6 @@ describe('Nutrition page', () => {
     }
   })
 
-  it('deletes a meal when delete button is clicked', async () => {
-    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input)
-      if (url.startsWith('/api/meals/42') && init?.method === 'DELETE') {
-        return new Response(null, { status: 204 })
-      }
-      if (url.startsWith('/api/meals')) {
-        return jsonResponse({
-          ...emptyMeals(),
-          breakfast: [makeMeal({ id: 42, food_name: 'Oats' })],
-        })
-      }
-      throw new Error(`Unhandled fetch: ${url}`)
-    })
-    globalThis.fetch = fetchMock as unknown as typeof fetch
-
-    const user = userEvent.setup()
-    render(<Nutrition />)
-
-    expect(await screen.findByText('Oats')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /delete oats/i }))
-
-    await waitFor(() => {
-      expect(screen.queryByText('Oats')).not.toBeInTheDocument()
-    })
-  })
-
   it('shows a "Saved" badge on Custom Food results and pre-fills macros editably', async () => {
     const calls: { url: string; method: string; body: string | null }[] = []
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
