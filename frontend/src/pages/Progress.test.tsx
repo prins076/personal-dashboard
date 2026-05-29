@@ -7,39 +7,11 @@ type FetchMock = ReturnType<typeof vi.fn>
 
 const originalFetch = globalThis.fetch
 
-const defaultGoals = {
-  id: 1,
-  calorie_goal: 2000,
-  protein_goal_g: 150,
-  carbs_goal_g: 200,
-  fat_goal_g: 65,
-  fiber_goal_g: 30,
-  water_goal_ml: 2500,
-  weight_goal_kg: null,
-  updated_at: '2026-05-25 12:00:00',
-}
-
-const defaultProfile = {
-  id: 1,
-  age: null,
-  sex: null,
-  height_cm: null,
-  activity_level: null,
-  updated_at: '2026-05-25 12:00:00',
-}
-
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
     headers: { 'content-type': 'application/json' },
   })
-}
-
-function urlFor(input: unknown): string {
-  if (typeof input === 'string') return input
-  if (input instanceof URL) return input.toString()
-  if (input instanceof Request) return input.url
-  return String(input)
 }
 
 describe('Progress page — coordinator smoke tests', () => {
@@ -49,10 +21,8 @@ describe('Progress page — coordinator smoke tests', () => {
     fetchMock = vi.fn()
     globalThis.fetch = fetchMock as unknown as typeof fetch
     fetchMock.mockImplementation((input: unknown) => {
-      const url = urlFor(input)
-      if (url.startsWith('/api/goals')) return Promise.resolve(jsonResponse(defaultGoals))
+      const url = typeof input === 'string' ? input : (input as Request).url
       if (url.startsWith('/api/weight')) return Promise.resolve(jsonResponse([]))
-      if (url.startsWith('/api/profile')) return Promise.resolve(jsonResponse(defaultProfile))
       if (url.startsWith('/api/dashboard/week')) return Promise.resolve(jsonResponse([]))
       return Promise.reject(new Error(`unexpected ${url}`))
     })
@@ -62,7 +32,7 @@ describe('Progress page — coordinator smoke tests', () => {
     globalThis.fetch = originalFetch
   })
 
-  it('renders without crashing and mounts all four child modules', async () => {
+  it('renders without crashing and mounts both chart modules', async () => {
     render(
       <MemoryRouter>
         <Progress />
@@ -70,12 +40,10 @@ describe('Progress page — coordinator smoke tests', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByLabelText(/calorie goal/i)).toBeInTheDocument()
+      expect(screen.getByText(/weight — last 30 days/i)).toBeInTheDocument()
     })
-
-    expect(screen.getByText(/weight — last 30 days/i)).toBeInTheDocument()
     expect(screen.getByText(/calories — this week/i)).toBeInTheDocument()
-    expect(screen.getByText(/nutritional goals/i)).toBeInTheDocument()
-    expect(screen.getByText(/calorie calculator/i)).toBeInTheDocument()
+    expect(screen.queryByText(/nutritional goals/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/calorie calculator/i)).not.toBeInTheDocument()
   })
 })
