@@ -507,4 +507,49 @@ describe('Dashboard page', () => {
     // Total duration shown
     expect(within(widget).getByText(/45/)).toBeInTheDocument()
   })
+
+  describe('FAB (floating action button)', () => {
+    it('renders the FAB button on the Dashboard', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse(dashboardResponse()))
+      render(<Dashboard />)
+      expect(screen.getByRole('button', { name: /add entry/i })).toBeInTheDocument()
+    })
+
+    it('clicking the FAB opens a submenu with four entry options', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse(dashboardResponse()))
+      const user = userEvent.setup()
+      render(<Dashboard />)
+
+      await user.click(screen.getByRole('button', { name: /add entry/i }))
+
+      expect(screen.getByRole('button', { name: /^nutrition$/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /^water$/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /^exercise$/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /^weight$/i })).toBeInTheDocument()
+    })
+
+    it('clicking the FAB again closes the submenu', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse(dashboardResponse()))
+      const user = userEvent.setup()
+      render(<Dashboard />)
+
+      await user.click(screen.getByRole('button', { name: /add entry/i }))
+      expect(screen.getByRole('button', { name: /^nutrition$/i })).toBeInTheDocument()
+
+      await user.click(screen.getByRole('button', { name: /add entry/i }))
+      expect(screen.queryByRole('button', { name: /^nutrition$/i })).not.toBeInTheDocument()
+    })
+
+    it('clicking outside the submenu closes it', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse(dashboardResponse()))
+      const user = userEvent.setup()
+      render(<Dashboard />)
+
+      await user.click(screen.getByRole('button', { name: /add entry/i }))
+      expect(screen.getByRole('button', { name: /^nutrition$/i })).toBeInTheDocument()
+
+      await user.click(screen.getByTestId('fab-backdrop'))
+      expect(screen.queryByRole('button', { name: /^nutrition$/i })).not.toBeInTheDocument()
+    })
+  })
 })

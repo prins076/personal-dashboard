@@ -475,6 +475,57 @@ function ExerciseSummary({ data }: { data: DashboardExercise }) {
   )
 }
 
+const FAB_OPTIONS = ['Nutrition', 'Water', 'Exercise', 'Weight'] as const
+
+function DashboardFAB() {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <>
+      {open && (
+        <div
+          data-testid="fab-backdrop"
+          className="fixed inset-0 z-40"
+          onClick={() => setOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
+        {open && (
+          <div className="flex flex-col items-end gap-2 mb-2">
+            {FAB_OPTIONS.map((label) => (
+              <button
+                key={label}
+                type="button"
+                onClick={() => setOpen(false)}
+                className="rounded-full bg-white dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-900 dark:text-gray-100 shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700"
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+        <button
+          type="button"
+          aria-label="Add entry"
+          onClick={() => setOpen((o) => !o)}
+          className="h-14 w-14 rounded-full bg-indigo-600 dark:bg-indigo-500 text-white shadow-lg flex items-center justify-center hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            className="h-6 w-6"
+            aria-hidden="true"
+          >
+            <path d="M12 3.75a.75.75 0 0 1 .75.75v6.75h6.75a.75.75 0 0 1 0 1.5h-6.75v6.75a.75.75 0 0 1-1.5 0v-6.75H4.5a.75.75 0 0 1 0-1.5h6.75V4.5a.75.75 0 0 1 .75-.75Z" />
+          </svg>
+        </button>
+      </div>
+    </>
+  )
+}
+
 export default function Dashboard() {
   const [data, setData] = useState<DashboardToday | null>(null)
   const [busy, setBusy] = useState(false)
@@ -517,50 +568,53 @@ export default function Dashboard() {
   )
 
   return (
-    <section className="space-y-6 p-6">
-      <h1 className="text-2xl font-semibold">Dashboard</h1>
+    <>
+      <section className="space-y-6 p-6">
+        <h1 className="text-2xl font-semibold">Dashboard</h1>
 
-      {error && (
-        <p role="alert" className="text-sm text-red-600">
-          {error}
-        </p>
-      )}
+        {error && (
+          <p role="alert" className="text-sm text-red-600">
+            {error}
+          </p>
+        )}
 
-      {!data ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <section className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
-              <h2 className="text-lg font-semibold">Calories</h2>
-              <div className="mt-3 flex justify-center">
-                <CalorieRing
-                  current={data.totals.calories}
-                  goal={data.goals?.calorie_goal ?? null}
-                  onSaveGoal={saveCalorieGoal}
+        {!data ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <section className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
+                <h2 className="text-lg font-semibold">Calories</h2>
+                <div className="mt-3 flex justify-center">
+                  <CalorieRing
+                    current={data.totals.calories}
+                    goal={data.goals?.calorie_goal ?? null}
+                    onSaveGoal={saveCalorieGoal}
+                  />
+                </div>
+              </section>
+              <section className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
+                <h2 className="text-lg font-semibold">Macros</h2>
+                <MacroPie
+                  protein={data.totals.protein_g}
+                  carbs={data.totals.carbs_g}
+                  fat={data.totals.fat_g}
                 />
-              </div>
-            </section>
-            <section className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
-              <h2 className="text-lg font-semibold">Macros</h2>
-              <MacroPie
-                protein={data.totals.protein_g}
-                carbs={data.totals.carbs_g}
-                fat={data.totals.fat_g}
-              />
-            </section>
-          </div>
+              </section>
+            </div>
 
-          <WaterBar data={data.water} busy={busy} onAdd={(a) => void addWater(a)} />
+            <WaterBar data={data.water} busy={busy} onAdd={(a) => void addWater(a)} />
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <WeightWidget data={data.weight} />
-            <ExerciseSummary data={data.exercise} />
-          </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <WeightWidget data={data.weight} />
+              <ExerciseSummary data={data.exercise} />
+            </div>
 
-          <MealsList meals={data.meals} />
-        </>
-      )}
-    </section>
+            <MealsList meals={data.meals} />
+          </>
+        )}
+      </section>
+      <DashboardFAB />
+    </>
   )
 }
