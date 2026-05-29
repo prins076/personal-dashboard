@@ -45,7 +45,10 @@ export function CalorieCalculator({
         if (!cancelled) setEntries(data)
       })
       .catch(() => {
-        if (!cancelled) setEntries([])
+        if (!cancelled) {
+          setEntries([])
+          setError('Failed to load weight data')
+        }
       })
     return () => {
       cancelled = true
@@ -106,8 +109,11 @@ export function CalorieCalculator({
   async function handleApplyGoal() {
     if (suggestedKcal === null) return
     setApplying(true)
+    setError(null)
     try {
       await onApplyGoal(suggestedKcal)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to apply goal')
     } finally {
       setApplying(false)
     }

@@ -70,6 +70,7 @@ export function NutritionGoalsForm({
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    setError(null)
     let cancelled = false
     apiClient
       .get<Goals>('/goals')
@@ -86,7 +87,7 @@ export function NutritionGoalsForm({
     return () => {
       cancelled = true
     }
-  }, [refreshKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [refreshKey, onGoalsLoaded])
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
