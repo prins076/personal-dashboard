@@ -71,7 +71,7 @@ function TrashIcon() {
   )
 }
 
-const deleteColHeader = <th className="px-3 py-2 w-8" />
+const deleteColHeader = <th className="px-3 py-2 w-20" />
 
 function DeleteButton({
   isPending,
@@ -86,7 +86,7 @@ function DeleteButton({
 }) {
   if (isPending) {
     return (
-      <td className="px-2 py-2 whitespace-nowrap">
+      <td className="px-2 py-2 w-20 whitespace-nowrap">
         <div className="flex gap-1">
           <button
             type="button"
@@ -107,7 +107,7 @@ function DeleteButton({
     )
   }
   return (
-    <td className="px-2 py-2 w-8">
+    <td className="px-2 py-2 w-20">
       <button
         type="button"
         aria-label="Delete"

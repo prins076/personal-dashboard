@@ -68,9 +68,19 @@ export function AddExerciseModal({ onClose, onCreated }: AddExerciseModalProps) 
         onSubmit={handleSubmit}
         className="w-full max-w-lg rounded-lg bg-white dark:bg-gray-800 p-6 shadow-xl"
       >
-        <h2 id="add-exercise-title" className="text-lg font-semibold">
-          Add exercise
-        </h2>
+        <div className="flex items-start justify-between">
+          <h2 id="add-exercise-title" className="text-lg font-semibold">
+            Add exercise
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900"
+            aria-label="Close modal"
+          >
+            ×
+          </button>
+        </div>
 
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="col-span-2 flex flex-col text-sm">
