@@ -29,3 +29,12 @@ The external nutrition database used to look up per-100g macros. Products missin
 
 ## User Profile
 A singleton record (`user_profile` table, always `id=1`) storing biometric stats: `age` (integer years), `sex` (`male` | `female`), `height_cm` (real), and `activity_level` (`sedentary` | `lightly_active` | `moderately_active` | `very_active` | `extra_active`). All fields are nullable — the profile starts empty and is built up via `PATCH /api/profile`. These values feed the Mifflin-St Jeor calorie goal calculator.
+
+## TDEE (Total Daily Energy Expenditure)
+Estimated daily calorie burn derived from the User Profile using the Mifflin-St Jeor formula: BMR = 10×weight_kg + 6.25×height_cm − 5×age + (5 for male, −161 for female), multiplied by an activity-level factor (1.2–1.9). Computed client-side in `utils/mifflin.ts` and surfaced in the Settings page as a suggested calorie goal. The user can accept or override it — the stored `calorie_goal` in Goals is independent of the TDEE calculation.
+
+## Goals
+A singleton record (`goals` table) storing daily intake targets: `calorie_goal`, `protein_goal_g`, `carbs_goal_g`, `fat_goal_g`, `fiber_goal_g`, `water_goal_ml`, and `weight_goal_kg`. All fields are nullable and partially updatable via `PATCH /api/goals`. The dashboard compares actual intake against these values to compute percentage progress.
+
+## Exercise Entry
+A single logged workout activity. Has a `name`, a `category` (`cardio` | `strength` | `flexibility` | `other`), and an optional mix of fields depending on category: `duration_min`, `sets`, `reps`, `weight_kg` (load lifted), `distance_km`, `calories_burned`, and `notes`. All metric fields are optional — a strength session may only record sets/reps/weight, a cardio session may only record duration/distance. Logged via `POST /api/exercise` or the `log_exercise` MCP tool.
