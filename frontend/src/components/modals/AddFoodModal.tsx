@@ -30,13 +30,11 @@ function formatLabel(type: MealType): string {
 export function AddFoodModal({ onClose, onCreated }: AddFoodModalProps) {
   const [step, setStep] = useState<Step>('search')
 
-  // Search step state
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<FoodSearchResult[]>([])
   const [searching, setSearching] = useState(false)
   const [searchError, setSearchError] = useState<string | null>(null)
 
-  // Edit step state
   const [picked, setPicked] = useState<FoodSearchResult | null>(null)
   const [quantity, setQuantity] = useState('100')
   const [unit, setUnit] = useState('g')
@@ -69,7 +67,6 @@ export function AddFoodModal({ onClose, onCreated }: AddFoodModalProps) {
     const q = 100
     setQuantity(String(q))
     setUnit('g')
-    // Pre-fill scaled macros (per-100g values × q/100)
     setCalories(String(scaleMacro(result.calories, q)))
     setProteinG(String(scaleMacro(result.protein_g, q)))
     setCarbsG(String(scaleMacro(result.carbs_g, q)))

@@ -412,6 +412,25 @@ export default function History() {
   const pendingDeleteId = (tabKey: TabKey) =>
     pendingDelete?.tab === tabKey ? pendingDelete.id : null
 
+  function renderTable() {
+    const deleteProps: TableDeleteProps = {
+      pendingDeleteId: pendingDeleteId(tab),
+      onRequestDelete: (id) => requestDelete(tab, id),
+      onConfirmDelete: (id) => void handleDelete(tab, id),
+      onCancelDelete: () => setPendingDelete(null),
+    }
+    switch (tab) {
+      case 'meals':
+        return <MealsTable rows={meals.slice(pageStart, pageEnd)} {...deleteProps} />
+      case 'water':
+        return <WaterTable rows={waters.slice(pageStart, pageEnd)} {...deleteProps} />
+      case 'exercise':
+        return <ExerciseTable rows={exercises.slice(pageStart, pageEnd)} {...deleteProps} />
+      case 'weight':
+        return <WeightTable rows={weights.slice(pageStart, pageEnd)} {...deleteProps} />
+    }
+  }
+
   return (
     <section className="p-6">
       <h1 className="text-2xl font-semibold">History</h1>
@@ -469,39 +488,7 @@ export default function History() {
           <p className="p-4 text-sm text-gray-500 dark:text-gray-400">Loading…</p>
         ) : rows.length === 0 ? (
           <p className="p-4 text-sm text-gray-500 dark:text-gray-400">No entries for the selected range.</p>
-        ) : tab === 'meals' ? (
-          <MealsTable
-            rows={meals.slice(pageStart, pageEnd)}
-            pendingDeleteId={pendingDeleteId('meals')}
-            onRequestDelete={(id) => requestDelete('meals', id)}
-            onConfirmDelete={(id) => void handleDelete('meals', id)}
-            onCancelDelete={() => setPendingDelete(null)}
-          />
-        ) : tab === 'water' ? (
-          <WaterTable
-            rows={waters.slice(pageStart, pageEnd)}
-            pendingDeleteId={pendingDeleteId('water')}
-            onRequestDelete={(id) => requestDelete('water', id)}
-            onConfirmDelete={(id) => void handleDelete('water', id)}
-            onCancelDelete={() => setPendingDelete(null)}
-          />
-        ) : tab === 'exercise' ? (
-          <ExerciseTable
-            rows={exercises.slice(pageStart, pageEnd)}
-            pendingDeleteId={pendingDeleteId('exercise')}
-            onRequestDelete={(id) => requestDelete('exercise', id)}
-            onConfirmDelete={(id) => void handleDelete('exercise', id)}
-            onCancelDelete={() => setPendingDelete(null)}
-          />
-        ) : (
-          <WeightTable
-            rows={weights.slice(pageStart, pageEnd)}
-            pendingDeleteId={pendingDeleteId('weight')}
-            onRequestDelete={(id) => requestDelete('weight', id)}
-            onConfirmDelete={(id) => void handleDelete('weight', id)}
-            onCancelDelete={() => setPendingDelete(null)}
-          />
-        )}
+        ) : renderTable()}
       </div>
 
       {rows.length > PAGE_SIZE && (
