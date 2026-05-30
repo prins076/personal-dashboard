@@ -3,8 +3,8 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import { apiClient } from '../api/client'
 import { MEAL_TYPES, type MealEntry, type MealType } from '../api/meals'
 import { createWeight } from '../api/weight'
-import { AddFoodModal } from './Nutrition'
-import { AddExerciseModal } from './Exercise'
+import { AddFoodModal } from '../components/modals/AddFoodModal'
+import { AddExerciseModal } from '../components/modals/AddExerciseModal'
 import { useTheme } from '../hooks/useTheme'
 
 function todayIso(): string {
