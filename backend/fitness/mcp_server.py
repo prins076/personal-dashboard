@@ -405,6 +405,17 @@ def delete_weight(id: int) -> dict[str, Any]:
 
 
 @mcp.tool()
+def delete_water(id: int) -> dict[str, Any]:
+    """Hard-delete a water entry by ID. Returns an error payload if not found."""
+    with get_connection() as conn:
+        cursor = conn.execute("DELETE FROM water_entries WHERE id = ?", (id,))
+        conn.commit()
+        if cursor.rowcount == 0:
+            return {"error": "NOT_FOUND", "message": f"No water entry with id {id}"}
+    return {"deleted": id}
+
+
+@mcp.tool()
 def update_goals(
     calorie_goal: Optional[float] = None,
     protein_goal_g: Optional[float] = None,

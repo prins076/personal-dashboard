@@ -22,10 +22,7 @@ export default function Settings() {
 
         <CalorieCalculator onApplyGoal={handleApplyGoal} />
 
-        <NutritionGoalsForm
-          refreshKey={goalsRefreshKey}
-          onGoalsLoaded={() => {}}
-        />
+        <NutritionGoalsForm refreshKey={goalsRefreshKey} />
       </section>
     </section>
   )
