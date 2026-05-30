@@ -73,13 +73,45 @@ function TrashIcon() {
 
 const deleteColHeader = <th className="px-3 py-2 w-8" />
 
-function DeleteButton({ onDelete }: { onDelete: () => void }) {
+function DeleteButton({
+  isPending,
+  onRequestDelete,
+  onConfirmDelete,
+  onCancelDelete,
+}: {
+  isPending: boolean
+  onRequestDelete: () => void
+  onConfirmDelete: () => void
+  onCancelDelete: () => void
+}) {
+  if (isPending) {
+    return (
+      <td className="px-2 py-2 whitespace-nowrap">
+        <div className="flex gap-1">
+          <button
+            type="button"
+            onClick={onConfirmDelete}
+            className="rounded bg-red-600 px-2 py-0.5 text-xs text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600"
+          >
+            Confirm
+          </button>
+          <button
+            type="button"
+            onClick={onCancelDelete}
+            className="rounded border border-gray-300 px-2 py-0.5 text-xs text-gray-600 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+          >
+            Cancel
+          </button>
+        </div>
+      </td>
+    )
+  }
   return (
     <td className="px-2 py-2 w-8">
       <button
         type="button"
         aria-label="Delete"
-        onClick={onDelete}
+        onClick={onRequestDelete}
         className="invisible group-hover:visible text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200"
       >
         <TrashIcon />
@@ -88,7 +120,20 @@ function DeleteButton({ onDelete }: { onDelete: () => void }) {
   )
 }
 
-function MealsTable({ rows, onDelete }: { rows: MealEntry[]; onDelete: (id: number) => void }) {
+type TableDeleteProps = {
+  pendingDeleteId: number | null
+  onRequestDelete: (id: number) => void
+  onConfirmDelete: (id: number) => void
+  onCancelDelete: () => void
+}
+
+function MealsTable({
+  rows,
+  pendingDeleteId,
+  onRequestDelete,
+  onConfirmDelete,
+  onCancelDelete,
+}: { rows: MealEntry[] } & TableDeleteProps) {
   return (
     <table className="w-full table-auto text-sm">
       <thead className="border-b border-gray-200 dark:border-gray-800 text-left text-xs uppercase text-gray-500 dark:text-gray-400">
@@ -115,7 +160,12 @@ function MealsTable({ rows, onDelete }: { rows: MealEntry[]; onDelete: (id: numb
             <td className="px-3 py-2">{e.protein_g ?? '—'}</td>
             <td className="px-3 py-2">{e.carbs_g ?? '—'}</td>
             <td className="px-3 py-2">{e.fat_g ?? '—'}</td>
-            <DeleteButton onDelete={() => onDelete(e.id)} />
+            <DeleteButton
+              isPending={pendingDeleteId === e.id}
+              onRequestDelete={() => onRequestDelete(e.id)}
+              onConfirmDelete={() => onConfirmDelete(e.id)}
+              onCancelDelete={onCancelDelete}
+            />
           </tr>
         ))}
       </tbody>
@@ -123,7 +173,13 @@ function MealsTable({ rows, onDelete }: { rows: MealEntry[]; onDelete: (id: numb
   )
 }
 
-function WaterTable({ rows, onDelete }: { rows: WaterEntry[]; onDelete: (id: number) => void }) {
+function WaterTable({
+  rows,
+  pendingDeleteId,
+  onRequestDelete,
+  onConfirmDelete,
+  onCancelDelete,
+}: { rows: WaterEntry[] } & TableDeleteProps) {
   return (
     <table className="w-full table-auto text-sm">
       <thead className="border-b border-gray-200 dark:border-gray-800 text-left text-xs uppercase text-gray-500 dark:text-gray-400">
@@ -140,7 +196,12 @@ function WaterTable({ rows, onDelete }: { rows: WaterEntry[]; onDelete: (id: num
             <td className="px-3 py-2">{e.date}</td>
             <td className="px-3 py-2">{e.amount_ml}</td>
             <td className="px-3 py-2">{e.notes ?? '—'}</td>
-            <DeleteButton onDelete={() => onDelete(e.id)} />
+            <DeleteButton
+              isPending={pendingDeleteId === e.id}
+              onRequestDelete={() => onRequestDelete(e.id)}
+              onConfirmDelete={() => onConfirmDelete(e.id)}
+              onCancelDelete={onCancelDelete}
+            />
           </tr>
         ))}
       </tbody>
@@ -150,11 +211,11 @@ function WaterTable({ rows, onDelete }: { rows: WaterEntry[]; onDelete: (id: num
 
 function ExerciseTable({
   rows,
-  onDelete,
-}: {
-  rows: ExerciseEntry[]
-  onDelete: (id: number) => void
-}) {
+  pendingDeleteId,
+  onRequestDelete,
+  onConfirmDelete,
+  onCancelDelete,
+}: { rows: ExerciseEntry[] } & TableDeleteProps) {
   const setsReps = (e: ExerciseEntry) =>
     e.sets != null && e.reps != null ? `${e.sets}×${e.reps}` : '—'
   return (
@@ -187,7 +248,12 @@ function ExerciseTable({
               {e.distance_km != null ? `${e.distance_km} km` : '—'}
             </td>
             <td className="px-3 py-2">{e.calories_burned ?? '—'}</td>
-            <DeleteButton onDelete={() => onDelete(e.id)} />
+            <DeleteButton
+              isPending={pendingDeleteId === e.id}
+              onRequestDelete={() => onRequestDelete(e.id)}
+              onConfirmDelete={() => onConfirmDelete(e.id)}
+              onCancelDelete={onCancelDelete}
+            />
           </tr>
         ))}
       </tbody>
@@ -195,7 +261,13 @@ function ExerciseTable({
   )
 }
 
-function WeightTable({ rows, onDelete }: { rows: WeightEntry[]; onDelete: (id: number) => void }) {
+function WeightTable({
+  rows,
+  pendingDeleteId,
+  onRequestDelete,
+  onConfirmDelete,
+  onCancelDelete,
+}: { rows: WeightEntry[] } & TableDeleteProps) {
   return (
     <table className="w-full table-auto text-sm">
       <thead className="border-b border-gray-200 dark:border-gray-800 text-left text-xs uppercase text-gray-500 dark:text-gray-400">
@@ -220,7 +292,12 @@ function WeightTable({ rows, onDelete }: { rows: WeightEntry[]; onDelete: (id: n
                   : String(e.change_from_previous)}
             </td>
             <td className="px-3 py-2">{e.notes ?? '—'}</td>
-            <DeleteButton onDelete={() => onDelete(e.id)} />
+            <DeleteButton
+              isPending={pendingDeleteId === e.id}
+              onRequestDelete={() => onRequestDelete(e.id)}
+              onConfirmDelete={() => onConfirmDelete(e.id)}
+              onCancelDelete={onCancelDelete}
+            />
           </tr>
         ))}
       </tbody>
@@ -244,6 +321,7 @@ export default function History() {
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<{ tab: TabKey; id: number } | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -289,9 +367,13 @@ export default function History() {
     }
   }, [tab, start, end])
 
+  function requestDelete(tabKey: TabKey, id: number) {
+    setPendingDelete({ tab: tabKey, id })
+  }
+
   async function handleDelete(tabKey: TabKey, id: number) {
-    if (!window.confirm('Delete this entry? This action cannot be undone.')) return
     const path = TABS.find((t) => t.key === tabKey)!.path
+    setPendingDelete(null)
     try {
       await apiClient.delete(`${path}/${id}`)
       switch (tabKey) {
@@ -327,6 +409,9 @@ export default function History() {
   const pageStart = (currentPage - 1) * PAGE_SIZE
   const pageEnd = pageStart + PAGE_SIZE
 
+  const pendingDeleteId = (tabKey: TabKey) =>
+    pendingDelete?.tab === tabKey ? pendingDelete.id : null
+
   return (
     <section className="p-6">
       <h1 className="text-2xl font-semibold">History</h1>
@@ -337,7 +422,10 @@ export default function History() {
             key={t.key}
             role="tab"
             aria-selected={tab === t.key}
-            onClick={() => setTab(t.key)}
+            onClick={() => {
+              setTab(t.key)
+              setPendingDelete(null)
+            }}
             className={
               tab === t.key
                 ? 'border-b-2 border-indigo-600 dark:border-indigo-400 px-3 py-2 text-sm font-medium text-indigo-700 dark:text-indigo-400'
@@ -384,22 +472,34 @@ export default function History() {
         ) : tab === 'meals' ? (
           <MealsTable
             rows={meals.slice(pageStart, pageEnd)}
-            onDelete={(id) => void handleDelete('meals', id)}
+            pendingDeleteId={pendingDeleteId('meals')}
+            onRequestDelete={(id) => requestDelete('meals', id)}
+            onConfirmDelete={(id) => void handleDelete('meals', id)}
+            onCancelDelete={() => setPendingDelete(null)}
           />
         ) : tab === 'water' ? (
           <WaterTable
             rows={waters.slice(pageStart, pageEnd)}
-            onDelete={(id) => void handleDelete('water', id)}
+            pendingDeleteId={pendingDeleteId('water')}
+            onRequestDelete={(id) => requestDelete('water', id)}
+            onConfirmDelete={(id) => void handleDelete('water', id)}
+            onCancelDelete={() => setPendingDelete(null)}
           />
         ) : tab === 'exercise' ? (
           <ExerciseTable
             rows={exercises.slice(pageStart, pageEnd)}
-            onDelete={(id) => void handleDelete('exercise', id)}
+            pendingDeleteId={pendingDeleteId('exercise')}
+            onRequestDelete={(id) => requestDelete('exercise', id)}
+            onConfirmDelete={(id) => void handleDelete('exercise', id)}
+            onCancelDelete={() => setPendingDelete(null)}
           />
         ) : (
           <WeightTable
             rows={weights.slice(pageStart, pageEnd)}
-            onDelete={(id) => void handleDelete('weight', id)}
+            pendingDeleteId={pendingDeleteId('weight')}
+            onRequestDelete={(id) => requestDelete('weight', id)}
+            onConfirmDelete={(id) => void handleDelete('weight', id)}
+            onCancelDelete={() => setPendingDelete(null)}
           />
         )}
       </div>

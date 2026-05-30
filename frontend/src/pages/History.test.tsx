@@ -219,9 +219,80 @@ describe('History page', () => {
     expect(await screen.findByText('Meal 1')).toBeInTheDocument()
   })
 
-  it('deletes a meals entry after confirmation', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValueOnce(true)
+  it('shows inline confirm/cancel when trash icon is clicked', async () => {
+    mockFetch({
+      '/api/meals': () => [meal({ id: 10, food_name: 'Oats' })],
+      '/api/water': () => [],
+      '/api/exercise': () => [],
+      '/api/weight': () => [],
+    })
 
+    const user = userEvent.setup()
+    render(<History />)
+    expect(await screen.findByText('Oats')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /delete/i }))
+
+    expect(screen.getByRole('button', { name: /confirm/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument()
+  })
+
+  it('restores trash icon when cancel is clicked', async () => {
+    mockFetch({
+      '/api/meals': () => [meal({ id: 10, food_name: 'Oats' })],
+      '/api/water': () => [],
+      '/api/exercise': () => [],
+      '/api/weight': () => [],
+    })
+
+    const user = userEvent.setup()
+    render(<History />)
+    expect(await screen.findByText('Oats')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /delete/i }))
+    expect(screen.getByRole('button', { name: /confirm/i })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /cancel/i }))
+
+    expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /confirm/i })).not.toBeInTheDocument()
+    expect(screen.getByText('Oats')).toBeInTheDocument()
+  })
+
+  it('only one row can be in confirmation state at a time', async () => {
+    mockFetch({
+      '/api/meals': () => [
+        meal({ id: 1, food_name: 'Oats' }),
+        meal({ id: 2, food_name: 'Eggs' }),
+      ],
+      '/api/water': () => [],
+      '/api/exercise': () => [],
+      '/api/weight': () => [],
+    })
+
+    const user = userEvent.setup()
+    render(<History />)
+    expect(await screen.findByText('Oats')).toBeInTheDocument()
+
+    // Click first row's trash — two delete buttons visible, click the first
+    const deleteButtons = screen.getAllByRole('button', { name: /delete/i })
+    await user.click(deleteButtons[0])
+
+    // First row shows Confirm/Cancel; second row still has its Delete button
+    expect(screen.getByRole('button', { name: /confirm/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument()
+
+    // Click second row's trash
+    await user.click(screen.getByRole('button', { name: /delete/i }))
+
+    // Only one Confirm button should exist (for the second row now)
+    expect(screen.getAllByRole('button', { name: /confirm/i })).toHaveLength(1)
+    // First row is no longer pending — it has its Delete button back
+    expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument()
+  })
+
+  it('deletes a meals entry after inline confirmation', async () => {
     const fetchSpy = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input)
       const method = (init?.method ?? 'GET').toUpperCase()
@@ -238,6 +309,7 @@ describe('History page', () => {
     expect(await screen.findByText('Oats')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /delete/i }))
+    await user.click(screen.getByRole('button', { name: /confirm/i }))
 
     await waitFor(() => expect(screen.queryByText('Oats')).not.toBeInTheDocument())
     const deleteCall = fetchSpy.mock.calls.find(
@@ -248,9 +320,7 @@ describe('History page', () => {
     expect(deleteCall).toBeTruthy()
   })
 
-  it('does not delete when user cancels confirmation', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValueOnce(false)
-
+  it('does not delete when user clicks cancel', async () => {
     const fetchSpy = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input)
       if (url.startsWith('/api/meals')) return jsonResponse([meal({ id: 10, food_name: 'Oats' })])
@@ -263,6 +333,7 @@ describe('History page', () => {
     expect(await screen.findByText('Oats')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /delete/i }))
+    await user.click(screen.getByRole('button', { name: /cancel/i }))
 
     expect(screen.getByText('Oats')).toBeInTheDocument()
     expect(
@@ -270,9 +341,7 @@ describe('History page', () => {
     ).toBe(false)
   })
 
-  it('deletes a water entry after confirmation', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValueOnce(true)
-
+  it('deletes a water entry after inline confirmation', async () => {
     const fetchSpy = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input)
       const method = (init?.method ?? 'GET').toUpperCase()
@@ -292,13 +361,12 @@ describe('History page', () => {
     expect(await screen.findByText('250')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /delete/i }))
+    await user.click(screen.getByRole('button', { name: /confirm/i }))
 
     await waitFor(() => expect(screen.queryByText('250')).not.toBeInTheDocument())
   })
 
-  it('deletes an exercise entry after confirmation', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValueOnce(true)
-
+  it('deletes an exercise entry after inline confirmation', async () => {
     const fetchSpy = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input)
       const method = (init?.method ?? 'GET').toUpperCase()
@@ -319,13 +387,12 @@ describe('History page', () => {
     expect(await screen.findByText('Morning run')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /delete/i }))
+    await user.click(screen.getByRole('button', { name: /confirm/i }))
 
     await waitFor(() => expect(screen.queryByText('Morning run')).not.toBeInTheDocument())
   })
 
-  it('deletes a weight entry after confirmation', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValueOnce(true)
-
+  it('deletes a weight entry after inline confirmation', async () => {
     const fetchSpy = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input)
       const method = (init?.method ?? 'GET').toUpperCase()
@@ -345,6 +412,7 @@ describe('History page', () => {
     expect(await screen.findByText('78.5')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /delete/i }))
+    await user.click(screen.getByRole('button', { name: /confirm/i }))
 
     await waitFor(() => expect(screen.queryByText('78.5')).not.toBeInTheDocument())
   })
