@@ -1,22 +1,25 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { apiClient } from '../api/client'
-import { WeightTrendChart } from '../components/progress/WeightTrendChart'
 import { CalorieWeekChart } from '../components/progress/CalorieWeekChart'
-import { CalorieCalculator } from '../components/progress/CalorieCalculator'
-import { NutritionGoalsForm } from '../components/progress/NutritionGoalsForm'
+import { WeightTrendChart } from '../components/progress/WeightTrendChart'
 
-type Goals = {
-  calorie_goal: number | null
-}
+type Goals = { calorie_goal: number | null }
 
 export default function Progress() {
   const [calorieGoal, setCalorieGoal] = useState<number | null>(null)
-  const [goalsRefreshKey, setGoalsRefreshKey] = useState(0)
 
-  async function handleApplyGoal(kcal: number) {
-    await apiClient.patch<Goals>('/goals', { calorie_goal: kcal })
-    setGoalsRefreshKey((k) => k + 1)
-  }
+  useEffect(() => {
+    let cancelled = false
+    apiClient
+      .get<Goals>('/goals')
+      .then((data) => {
+        if (!cancelled) setCalorieGoal(data.calorie_goal)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   return (
     <section className="p-6">
@@ -25,19 +28,6 @@ export default function Progress() {
       <WeightTrendChart />
 
       <CalorieWeekChart calorieGoal={calorieGoal} />
-
-      <section aria-labelledby="goals-heading" className="mt-8">
-        <h2 id="goals-heading" className="text-lg font-semibold">
-          Nutritional goals
-        </h2>
-
-        <CalorieCalculator onApplyGoal={handleApplyGoal} />
-
-        <NutritionGoalsForm
-          refreshKey={goalsRefreshKey}
-          onGoalsLoaded={setCalorieGoal}
-        />
-      </section>
     </section>
   )
 }

@@ -2,7 +2,15 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import { apiClient } from '../api/client'
 import { MEAL_TYPES, type MealEntry, type MealType } from '../api/meals'
+import { createWeight } from '../api/weight'
+import { AddFoodModal } from './Nutrition'
+import { AddExerciseModal } from './Exercise'
 import { useTheme } from '../hooks/useTheme'
+
+function todayIso(): string {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+}
 
 type DashboardGoals = {
   id: number
@@ -475,6 +483,221 @@ function ExerciseSummary({ data }: { data: DashboardExercise }) {
   )
 }
 
+function WaterQuickAddPopover({
+  onAdd,
+  onClose,
+}: {
+  onAdd: (amount: number) => void
+  onClose: () => void
+}) {
+  return (
+    <>
+      <div
+        data-testid="water-popover-backdrop"
+        className="fixed inset-0 z-50"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div
+        data-testid="water-quick-add-popover"
+        role="dialog"
+        aria-label="Quick add water"
+        className="fixed bottom-24 right-6 rounded-lg bg-white dark:bg-gray-800 p-4 shadow-xl border border-gray-200 dark:border-gray-700"
+        style={{ zIndex: 51 }}
+      >
+        <p className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">Add water</p>
+        <div className="flex gap-2">
+          {QUICK_ADD_AMOUNTS.map((amount) => (
+            <button
+              key={amount}
+              type="button"
+              onClick={() => {
+                onAdd(amount)
+                onClose()
+              }}
+              className="rounded-md border border-sky-300 bg-sky-50 px-3 py-1 text-sm font-medium text-sky-700 hover:bg-sky-100 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300 dark:hover:bg-sky-900"
+            >
+              +{amount}ml
+            </button>
+          ))}
+        </div>
+      </div>
+    </>
+  )
+}
+
+const FAB_OPTIONS = ['Nutrition', 'Water', 'Exercise', 'Weight'] as const
+type FabOption = (typeof FAB_OPTIONS)[number]
+
+function WeightEntryModal({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void
+  onCreated: () => void
+}) {
+  const [weightKg, setWeightKg] = useState('')
+  const [date, setDate] = useState(todayIso)
+  const [notes, setNotes] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [conflictDate, setConflictDate] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setSubmitting(true)
+    setError(null)
+    setConflictDate(null)
+    try {
+      const result = await createWeight({
+        weight_kg: parseFloat(weightKg),
+        date,
+        notes: notes.trim() || null,
+      })
+      if (!result.conflict) {
+        onCreated()
+      } else {
+        setConflictDate(result.existing.date)
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to log weight')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="weight-modal-title"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+    >
+      <div className="w-full max-w-md rounded-lg bg-white dark:bg-gray-800 p-6 shadow-xl">
+        <h2 id="weight-modal-title" className="text-lg font-semibold dark:text-gray-100">
+          Log Weight
+        </h2>
+        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+          <label className="block text-sm">
+            <span className="text-gray-700 dark:text-gray-300">Weight (kg)</span>
+            <input
+              type="number"
+              step="0.1"
+              min="0.1"
+              required
+              value={weightKg}
+              onChange={(e) => setWeightKg(e.target.value)}
+              className="mt-1 block w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100"
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="text-gray-700 dark:text-gray-300">Date</span>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="mt-1 block w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100"
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="text-gray-700 dark:text-gray-300">Notes</span>
+            <input
+              type="text"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="mt-1 block w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100"
+            />
+          </label>
+          {conflictDate && (
+            <p role="alert" className="text-sm text-amber-700 dark:text-amber-400">
+              Weight already logged for {conflictDate}. Delete the existing entry first on the{' '}
+              <a href="/history" className="underline">
+                History page
+              </a>
+              .
+            </p>
+          )}
+          {error && (
+            <p role="alert" className="text-sm text-red-600">
+              {error}
+            </p>
+          )}
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="rounded bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+            >
+              {submitting ? 'Saving…' : 'Save'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+function DashboardFAB({ onSelect }: { onSelect: (option: FabOption) => void }) {
+  const [open, setOpen] = useState(false)
+
+  function handleOption(label: FabOption) {
+    setOpen(false)
+    onSelect(label)
+  }
+
+  return (
+    <>
+      {open && (
+        <div
+          data-testid="fab-backdrop"
+          className="fixed inset-0 z-40"
+          onClick={() => setOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
+        {open && (
+          <div className="flex flex-col items-end gap-2 mb-2">
+            {FAB_OPTIONS.map((label) => (
+              <button
+                key={label}
+                type="button"
+                onClick={() => handleOption(label)}
+                className="rounded-full bg-white dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-900 dark:text-gray-100 shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700"
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+        <button
+          type="button"
+          aria-label="Add entry"
+          onClick={() => setOpen((o) => !o)}
+          className="h-14 w-14 rounded-full bg-indigo-600 dark:bg-indigo-500 text-white shadow-lg flex items-center justify-center hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            className="h-6 w-6"
+            aria-hidden="true"
+          >
+            <path d="M12 3.75a.75.75 0 0 1 .75.75v6.75h6.75a.75.75 0 0 1 0 1.5h-6.75v6.75a.75.75 0 0 1-1.5 0v-6.75H4.5a.75.75 0 0 1 0-1.5h6.75V4.5a.75.75 0 0 1 .75-.75Z" />
+          </svg>
+        </button>
+      </div>
+    </>
+  )
+}
+
 export default function Dashboard() {
   const [data, setData] = useState<DashboardToday | null>(null)
   const [busy, setBusy] = useState(false)
@@ -516,51 +739,99 @@ export default function Dashboard() {
     [refresh],
   )
 
+  const [weightModalOpen, setWeightModalOpen] = useState(false)
+  const [nutritionModalOpen, setNutritionModalOpen] = useState(false)
+  const [exerciseModalOpen, setExerciseModalOpen] = useState(false)
+  const [waterPopoverOpen, setWaterPopoverOpen] = useState(false)
+
+  function handleFabSelect(option: FabOption) {
+    if (option === 'Weight') setWeightModalOpen(true)
+    else if (option === 'Nutrition') setNutritionModalOpen(true)
+    else if (option === 'Exercise') setExerciseModalOpen(true)
+    else if (option === 'Water') setWaterPopoverOpen(true)
+  }
+
   return (
-    <section className="space-y-6 p-6">
-      <h1 className="text-2xl font-semibold">Dashboard</h1>
+    <>
+      <section className="space-y-6 p-6">
+        <h1 className="text-2xl font-semibold">Dashboard</h1>
 
-      {error && (
-        <p role="alert" className="text-sm text-red-600">
-          {error}
-        </p>
-      )}
+        {error && (
+          <p role="alert" className="text-sm text-red-600">
+            {error}
+          </p>
+        )}
 
-      {!data ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <section className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
-              <h2 className="text-lg font-semibold">Calories</h2>
-              <div className="mt-3 flex justify-center">
-                <CalorieRing
-                  current={data.totals.calories}
-                  goal={data.goals?.calorie_goal ?? null}
-                  onSaveGoal={saveCalorieGoal}
+        {!data ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <section className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
+                <h2 className="text-lg font-semibold">Calories</h2>
+                <div className="mt-3 flex justify-center">
+                  <CalorieRing
+                    current={data.totals.calories}
+                    goal={data.goals?.calorie_goal ?? null}
+                    onSaveGoal={saveCalorieGoal}
+                  />
+                </div>
+              </section>
+              <section className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
+                <h2 className="text-lg font-semibold">Macros</h2>
+                <MacroPie
+                  protein={data.totals.protein_g}
+                  carbs={data.totals.carbs_g}
+                  fat={data.totals.fat_g}
                 />
-              </div>
-            </section>
-            <section className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
-              <h2 className="text-lg font-semibold">Macros</h2>
-              <MacroPie
-                protein={data.totals.protein_g}
-                carbs={data.totals.carbs_g}
-                fat={data.totals.fat_g}
-              />
-            </section>
-          </div>
+              </section>
+            </div>
 
-          <WaterBar data={data.water} busy={busy} onAdd={(a) => void addWater(a)} />
+            <WaterBar data={data.water} busy={busy} onAdd={(a) => void addWater(a)} />
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <WeightWidget data={data.weight} />
-            <ExerciseSummary data={data.exercise} />
-          </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <WeightWidget data={data.weight} />
+              <ExerciseSummary data={data.exercise} />
+            </div>
 
-          <MealsList meals={data.meals} />
-        </>
+            <MealsList meals={data.meals} />
+          </>
+        )}
+      </section>
+      <DashboardFAB onSelect={handleFabSelect} />
+      {weightModalOpen && (
+        <WeightEntryModal
+          onClose={() => setWeightModalOpen(false)}
+          onCreated={() => {
+            setWeightModalOpen(false)
+            void refresh()
+          }}
+        />
       )}
-    </section>
+      {nutritionModalOpen && (
+        <AddFoodModal
+          onClose={() => setNutritionModalOpen(false)}
+          onCreated={() => {
+            setNutritionModalOpen(false)
+            void refresh()
+          }}
+        />
+      )}
+      {exerciseModalOpen && (
+        <AddExerciseModal
+          onClose={() => setExerciseModalOpen(false)}
+          onCreated={() => {
+            setExerciseModalOpen(false)
+            void refresh()
+          }}
+        />
+      )}
+      {waterPopoverOpen && (
+        <WaterQuickAddPopover
+          onAdd={(amount) => void addWater(amount)}
+          onClose={() => setWaterPopoverOpen(false)}
+        />
+      )}
+    </>
   )
 }

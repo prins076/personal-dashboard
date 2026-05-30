@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   createExercise,
-  deleteExercise,
   listExercise,
   type ExerciseCategory,
   type ExerciseEntry,
@@ -29,7 +28,7 @@ type AddModalProps = {
   onCreated: (entry: ExerciseEntry) => void
 }
 
-function AddExerciseModal({ onClose, onCreated }: AddModalProps) {
+export function AddExerciseModal({ onClose, onCreated }: AddModalProps) {
   const [name, setName] = useState('')
   const [category, setCategory] = useState<ExerciseCategory>('cardio')
   const [durationMin, setDurationMin] = useState('')
@@ -253,15 +252,6 @@ export default function Exercise() {
     }
   }, [today])
 
-  async function handleDelete(entry: ExerciseEntry) {
-    try {
-      await deleteExercise(entry.id)
-      setEntries((prev) => prev.filter((e) => e.id !== entry.id))
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'failed to delete')
-    }
-  }
-
   return (
     <section className="p-6">
       <div className="flex items-center justify-between">
@@ -291,23 +281,13 @@ export default function Exercise() {
             {entries.map((entry) => (
               <li
                 key={entry.id}
-                className="flex items-center justify-between px-4 py-3"
+                className="px-4 py-3"
               >
-                <div>
-                  <p className="font-medium">{entry.name}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    <span className="uppercase tracking-wide">{entry.category}</span>
-                    {statLine(entry) && <span> · {statLine(entry)}</span>}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  aria-label={`Delete ${entry.name}`}
-                  onClick={() => handleDelete(entry)}
-                  className="text-sm text-red-600 hover:underline"
-                >
-                  Delete
-                </button>
+                <p className="font-medium">{entry.name}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <span className="uppercase tracking-wide">{entry.category}</span>
+                  {statLine(entry) && <span> · {statLine(entry)}</span>}
+                </p>
               </li>
             ))}
           </ul>

@@ -53,7 +53,42 @@ function buildQuery(start: string, end: string): string {
   return parts.length ? `?${parts.join('&')}` : ''
 }
 
-function MealsTable({ rows }: { rows: MealEntry[] }) {
+function TrashIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <path
+        fillRule="evenodd"
+        d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 3.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z"
+        clipRule="evenodd"
+      />
+    </svg>
+  )
+}
+
+const deleteColHeader = <th className="px-3 py-2 w-8" />
+
+function DeleteButton({ onDelete }: { onDelete: () => void }) {
+  return (
+    <td className="px-2 py-2 w-8">
+      <button
+        type="button"
+        aria-label="Delete"
+        onClick={onDelete}
+        className="invisible group-hover:visible text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200"
+      >
+        <TrashIcon />
+      </button>
+    </td>
+  )
+}
+
+function MealsTable({ rows, onDelete }: { rows: MealEntry[]; onDelete: (id: number) => void }) {
   return (
     <table className="w-full table-auto text-sm">
       <thead className="border-b border-gray-200 dark:border-gray-800 text-left text-xs uppercase text-gray-500 dark:text-gray-400">
@@ -66,11 +101,12 @@ function MealsTable({ rows }: { rows: MealEntry[] }) {
           <th className="px-3 py-2">Protein</th>
           <th className="px-3 py-2">Carbs</th>
           <th className="px-3 py-2">Fat</th>
+          {deleteColHeader}
         </tr>
       </thead>
       <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
         {rows.map((e) => (
-          <tr key={e.id}>
+          <tr key={e.id} className="group">
             <td className="px-3 py-2">{e.date}</td>
             <td className="px-3 py-2">{e.meal_type}</td>
             <td className="px-3 py-2">{e.food_name}</td>
@@ -79,6 +115,7 @@ function MealsTable({ rows }: { rows: MealEntry[] }) {
             <td className="px-3 py-2">{e.protein_g ?? '—'}</td>
             <td className="px-3 py-2">{e.carbs_g ?? '—'}</td>
             <td className="px-3 py-2">{e.fat_g ?? '—'}</td>
+            <DeleteButton onDelete={() => onDelete(e.id)} />
           </tr>
         ))}
       </tbody>
@@ -86,7 +123,7 @@ function MealsTable({ rows }: { rows: MealEntry[] }) {
   )
 }
 
-function WaterTable({ rows }: { rows: WaterEntry[] }) {
+function WaterTable({ rows, onDelete }: { rows: WaterEntry[]; onDelete: (id: number) => void }) {
   return (
     <table className="w-full table-auto text-sm">
       <thead className="border-b border-gray-200 dark:border-gray-800 text-left text-xs uppercase text-gray-500 dark:text-gray-400">
@@ -94,14 +131,16 @@ function WaterTable({ rows }: { rows: WaterEntry[] }) {
           <th className="px-3 py-2">Date</th>
           <th className="px-3 py-2">Amount (ml)</th>
           <th className="px-3 py-2">Notes</th>
+          {deleteColHeader}
         </tr>
       </thead>
       <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
         {rows.map((e) => (
-          <tr key={e.id}>
+          <tr key={e.id} className="group">
             <td className="px-3 py-2">{e.date}</td>
             <td className="px-3 py-2">{e.amount_ml}</td>
             <td className="px-3 py-2">{e.notes ?? '—'}</td>
+            <DeleteButton onDelete={() => onDelete(e.id)} />
           </tr>
         ))}
       </tbody>
@@ -109,7 +148,13 @@ function WaterTable({ rows }: { rows: WaterEntry[] }) {
   )
 }
 
-function ExerciseTable({ rows }: { rows: ExerciseEntry[] }) {
+function ExerciseTable({
+  rows,
+  onDelete,
+}: {
+  rows: ExerciseEntry[]
+  onDelete: (id: number) => void
+}) {
   const setsReps = (e: ExerciseEntry) =>
     e.sets != null && e.reps != null ? `${e.sets}×${e.reps}` : '—'
   return (
@@ -124,11 +169,12 @@ function ExerciseTable({ rows }: { rows: ExerciseEntry[] }) {
           <th className="px-3 py-2">Weight</th>
           <th className="px-3 py-2">Distance</th>
           <th className="px-3 py-2">Calories burned</th>
+          {deleteColHeader}
         </tr>
       </thead>
       <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
         {rows.map((e) => (
-          <tr key={e.id}>
+          <tr key={e.id} className="group">
             <td className="px-3 py-2">{e.date}</td>
             <td className="px-3 py-2">{e.name}</td>
             <td className="px-3 py-2">{e.category}</td>
@@ -141,6 +187,7 @@ function ExerciseTable({ rows }: { rows: ExerciseEntry[] }) {
               {e.distance_km != null ? `${e.distance_km} km` : '—'}
             </td>
             <td className="px-3 py-2">{e.calories_burned ?? '—'}</td>
+            <DeleteButton onDelete={() => onDelete(e.id)} />
           </tr>
         ))}
       </tbody>
@@ -148,7 +195,7 @@ function ExerciseTable({ rows }: { rows: ExerciseEntry[] }) {
   )
 }
 
-function WeightTable({ rows }: { rows: WeightEntry[] }) {
+function WeightTable({ rows, onDelete }: { rows: WeightEntry[]; onDelete: (id: number) => void }) {
   return (
     <table className="w-full table-auto text-sm">
       <thead className="border-b border-gray-200 dark:border-gray-800 text-left text-xs uppercase text-gray-500 dark:text-gray-400">
@@ -157,11 +204,12 @@ function WeightTable({ rows }: { rows: WeightEntry[] }) {
           <th className="px-3 py-2">Weight (kg)</th>
           <th className="px-3 py-2">Change from previous</th>
           <th className="px-3 py-2">Notes</th>
+          {deleteColHeader}
         </tr>
       </thead>
       <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
         {rows.map((e) => (
-          <tr key={e.id}>
+          <tr key={e.id} className="group">
             <td className="px-3 py-2">{e.date}</td>
             <td className="px-3 py-2">{e.weight_kg}</td>
             <td className="px-3 py-2">
@@ -172,6 +220,7 @@ function WeightTable({ rows }: { rows: WeightEntry[] }) {
                   : String(e.change_from_previous)}
             </td>
             <td className="px-3 py-2">{e.notes ?? '—'}</td>
+            <DeleteButton onDelete={() => onDelete(e.id)} />
           </tr>
         ))}
       </tbody>
@@ -239,6 +288,30 @@ export default function History() {
       cancelled = true
     }
   }, [tab, start, end])
+
+  async function handleDelete(tabKey: TabKey, id: number) {
+    if (!window.confirm('Delete this entry? This action cannot be undone.')) return
+    const path = TABS.find((t) => t.key === tabKey)!.path
+    try {
+      await apiClient.delete(`${path}/${id}`)
+      switch (tabKey) {
+        case 'meals':
+          setMeals((prev) => prev.filter((e) => e.id !== id))
+          break
+        case 'water':
+          setWaters((prev) => prev.filter((e) => e.id !== id))
+          break
+        case 'exercise':
+          setExercises((prev) => prev.filter((e) => e.id !== id))
+          break
+        case 'weight':
+          setWeights((prev) => prev.filter((e) => e.id !== id))
+          break
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to delete entry')
+    }
+  }
 
   const rows: unknown[] =
     tab === 'meals'
@@ -309,13 +382,25 @@ export default function History() {
         ) : rows.length === 0 ? (
           <p className="p-4 text-sm text-gray-500 dark:text-gray-400">No entries for the selected range.</p>
         ) : tab === 'meals' ? (
-          <MealsTable rows={meals.slice(pageStart, pageEnd)} />
+          <MealsTable
+            rows={meals.slice(pageStart, pageEnd)}
+            onDelete={(id) => void handleDelete('meals', id)}
+          />
         ) : tab === 'water' ? (
-          <WaterTable rows={waters.slice(pageStart, pageEnd)} />
+          <WaterTable
+            rows={waters.slice(pageStart, pageEnd)}
+            onDelete={(id) => void handleDelete('water', id)}
+          />
         ) : tab === 'exercise' ? (
-          <ExerciseTable rows={exercises.slice(pageStart, pageEnd)} />
+          <ExerciseTable
+            rows={exercises.slice(pageStart, pageEnd)}
+            onDelete={(id) => void handleDelete('exercise', id)}
+          />
         ) : (
-          <WeightTable rows={weights.slice(pageStart, pageEnd)} />
+          <WeightTable
+            rows={weights.slice(pageStart, pageEnd)}
+            onDelete={(id) => void handleDelete('weight', id)}
+          />
         )}
       </div>
 

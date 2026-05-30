@@ -219,6 +219,136 @@ describe('History page', () => {
     expect(await screen.findByText('Meal 1')).toBeInTheDocument()
   })
 
+  it('deletes a meals entry after confirmation', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValueOnce(true)
+
+    const fetchSpy = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      const method = (init?.method ?? 'GET').toUpperCase()
+      if (url.match(/\/api\/meals\/\d+/) && method === 'DELETE') {
+        return new Response(null, { status: 204 })
+      }
+      if (url.startsWith('/api/meals')) return jsonResponse([meal({ id: 10, food_name: 'Oats' })])
+      return jsonResponse([])
+    })
+    globalThis.fetch = fetchSpy as unknown as typeof fetch
+
+    const user = userEvent.setup()
+    render(<History />)
+    expect(await screen.findByText('Oats')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /delete/i }))
+
+    await waitFor(() => expect(screen.queryByText('Oats')).not.toBeInTheDocument())
+    const deleteCall = fetchSpy.mock.calls.find(
+      ([url, init]) =>
+        String(url).includes('/api/meals/10') &&
+        (init as RequestInit)?.method === 'DELETE',
+    )
+    expect(deleteCall).toBeTruthy()
+  })
+
+  it('does not delete when user cancels confirmation', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValueOnce(false)
+
+    const fetchSpy = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.startsWith('/api/meals')) return jsonResponse([meal({ id: 10, food_name: 'Oats' })])
+      return jsonResponse([])
+    })
+    globalThis.fetch = fetchSpy as unknown as typeof fetch
+
+    const user = userEvent.setup()
+    render(<History />)
+    expect(await screen.findByText('Oats')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /delete/i }))
+
+    expect(screen.getByText('Oats')).toBeInTheDocument()
+    expect(
+      fetchSpy.mock.calls.some((args) => (args as unknown[])[1] != null && ((args as unknown[])[1] as RequestInit)?.method === 'DELETE'),
+    ).toBe(false)
+  })
+
+  it('deletes a water entry after confirmation', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValueOnce(true)
+
+    const fetchSpy = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      const method = (init?.method ?? 'GET').toUpperCase()
+      if (url.match(/\/api\/water\/\d+/) && method === 'DELETE') {
+        return new Response(null, { status: 204 })
+      }
+      if (url.startsWith('/api/meals')) return jsonResponse([])
+      if (url.startsWith('/api/water')) return jsonResponse([water({ id: 5, amount_ml: 250 })])
+      return jsonResponse([])
+    })
+    globalThis.fetch = fetchSpy as unknown as typeof fetch
+
+    const user = userEvent.setup()
+    render(<History />)
+
+    await user.click(screen.getByRole('tab', { name: /water/i }))
+    expect(await screen.findByText('250')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /delete/i }))
+
+    await waitFor(() => expect(screen.queryByText('250')).not.toBeInTheDocument())
+  })
+
+  it('deletes an exercise entry after confirmation', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValueOnce(true)
+
+    const fetchSpy = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      const method = (init?.method ?? 'GET').toUpperCase()
+      if (url.match(/\/api\/exercise\/\d+/) && method === 'DELETE') {
+        return new Response(null, { status: 204 })
+      }
+      if (url.startsWith('/api/meals')) return jsonResponse([])
+      if (url.startsWith('/api/exercise'))
+        return jsonResponse([exercise({ id: 7, name: 'Morning run' })])
+      return jsonResponse([])
+    })
+    globalThis.fetch = fetchSpy as unknown as typeof fetch
+
+    const user = userEvent.setup()
+    render(<History />)
+
+    await user.click(screen.getByRole('tab', { name: /exercise/i }))
+    expect(await screen.findByText('Morning run')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /delete/i }))
+
+    await waitFor(() => expect(screen.queryByText('Morning run')).not.toBeInTheDocument())
+  })
+
+  it('deletes a weight entry after confirmation', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValueOnce(true)
+
+    const fetchSpy = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      const method = (init?.method ?? 'GET').toUpperCase()
+      if (url.match(/\/api\/weight\/\d+/) && method === 'DELETE') {
+        return new Response(null, { status: 204 })
+      }
+      if (url.startsWith('/api/meals')) return jsonResponse([])
+      if (url.startsWith('/api/weight')) return jsonResponse([weight({ id: 3, weight_kg: 78.5 })])
+      return jsonResponse([])
+    })
+    globalThis.fetch = fetchSpy as unknown as typeof fetch
+
+    const user = userEvent.setup()
+    render(<History />)
+
+    await user.click(screen.getByRole('tab', { name: /weight/i }))
+    expect(await screen.findByText('78.5')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /delete/i }))
+
+    await waitFor(() => expect(screen.queryByText('78.5')).not.toBeInTheDocument())
+  })
+
   it('meals tab shows the spec columns', async () => {
     mockFetch({
       '/api/meals': () => [
@@ -252,6 +382,7 @@ describe('History page', () => {
       'Protein',
       'Carbs',
       'Fat',
+      '',
     ])
     // row data
     const row = within(table).getAllByRole('row')[1]

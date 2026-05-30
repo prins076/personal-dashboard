@@ -58,10 +58,10 @@ function diffPatch(form: FormState, base: Goals): Partial<Record<GoalField, numb
 
 export function NutritionGoalsForm({
   refreshKey,
-  onGoalsLoaded,
+  onGoalsLoaded = () => {},
 }: {
   refreshKey: number
-  onGoalsLoaded: (calorieGoal: number | null) => void
+  onGoalsLoaded?: (calorieGoal: number | null) => void
 }) {
   const [goals, setGoals] = useState<Goals | null>(null)
   const [form, setForm] = useState<FormState | null>(null)

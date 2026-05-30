@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   createMeal,
-  deleteMeal,
   listMeals,
   MEAL_TYPES,
   type MealEntry,
@@ -42,7 +41,7 @@ type AddFoodModalProps = {
 
 type Step = 'search' | 'edit'
 
-function AddFoodModal({ onClose, onCreated }: AddFoodModalProps) {
+export function AddFoodModal({ onClose, onCreated }: AddFoodModalProps) {
   const [step, setStep] = useState<Step>('search')
 
   // Search step state
@@ -354,11 +353,9 @@ function AddFoodModal({ onClose, onCreated }: AddFoodModalProps) {
 function MealGroup({
   type,
   entries,
-  onDelete,
 }: {
   type: MealType
   entries: MealEntry[]
-  onDelete: (entry: MealEntry) => void
 }) {
   return (
     <section
@@ -373,26 +370,16 @@ function MealGroup({
           {entries.map((entry) => (
             <li
               key={entry.id}
-              className="flex items-center justify-between py-2 text-sm"
+              className="py-2 text-sm"
             >
-              <div>
-                <p className="font-medium">{entry.food_name}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {entry.quantity} {entry.unit}
-                  {entry.calories != null && ` · ${entry.calories} kcal`}
-                  {entry.protein_g != null && ` · ${entry.protein_g}g P`}
-                  {entry.carbs_g != null && ` · ${entry.carbs_g}g C`}
-                  {entry.fat_g != null && ` · ${entry.fat_g}g F`}
-                </p>
-              </div>
-              <button
-                type="button"
-                aria-label={`Delete ${entry.food_name}`}
-                onClick={() => onDelete(entry)}
-                className="text-xs text-red-600 hover:underline"
-              >
-                Delete
-              </button>
+              <p className="font-medium">{entry.food_name}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {entry.quantity} {entry.unit}
+                {entry.calories != null && ` · ${entry.calories} kcal`}
+                {entry.protein_g != null && ` · ${entry.protein_g}g P`}
+                {entry.carbs_g != null && ` · ${entry.carbs_g}g C`}
+                {entry.fat_g != null && ` · ${entry.fat_g}g F`}
+              </p>
             </li>
           ))}
         </ul>
@@ -424,18 +411,6 @@ export default function Nutrition() {
   useEffect(() => {
     void load()
   }, [load])
-
-  async function handleDelete(entry: MealEntry) {
-    try {
-      await deleteMeal(entry.id)
-      setMeals((prev) => ({
-        ...prev,
-        [entry.meal_type]: prev[entry.meal_type].filter((e) => e.id !== entry.id),
-      }))
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'failed to delete meal')
-    }
-  }
 
   function handleCreated(entry: MealEntry) {
     setMeals((prev) => ({
@@ -473,7 +448,6 @@ export default function Nutrition() {
               key={type}
               type={type}
               entries={meals[type]}
-              onDelete={handleDelete}
             />
           ))}
         </div>

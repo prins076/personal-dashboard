@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import Exercise from './Exercise'
 import type { ExerciseEntry } from '../api/exercise'
@@ -105,22 +105,4 @@ describe('Exercise page', () => {
     expect(body.weight_kg).toBe(80)
   })
 
-  it('deletes an entry when the delete button is clicked', async () => {
-    const user = userEvent.setup()
-    const entry = makeEntry({ id: 42, name: 'Run' })
-    const fetchMock = globalThis.fetch as unknown as FetchMock
-    fetchMock.mockResolvedValueOnce(jsonResponse([entry]))
-    fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }))
-
-    render(<Exercise />)
-    await screen.findByText('Run')
-
-    await user.click(screen.getByRole('button', { name: /delete run/i }))
-
-    await waitFor(() => expect(screen.queryByText('Run')).not.toBeInTheDocument())
-
-    const deleteCall = fetchMock.mock.calls[1]
-    expect(deleteCall[0]).toBe('/api/exercise/42')
-    expect(deleteCall[1].method).toBe('DELETE')
-  })
 })
