@@ -47,5 +47,6 @@ backend/data/
 
 # AFK agent framework (local only)
 .sandcastle/
+.sandcastle_old/
 package.json
 package-lock.json
