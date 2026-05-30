@@ -22,10 +22,15 @@ personal-dashboard/
 └── frontend/
     ├── package.json          # React 19, Vite 7, Tailwind 4, Recharts, react-router-dom v6
     └── src/
-        ├── api/              # typed fetch wrappers (client, meals, exercise, food)
-        ├── hooks/            # useTheme
-        ├── components/       # ThemeToggle
-        └── pages/            # Dashboard, Nutrition, Exercise, Progress, History
+        ├── api/              # typed fetch wrappers (client, meals, exercise, food, profile, weight)
+        ├── hooks/            # ThemeContext, useTheme, useProfile
+        ├── components/
+        │   ├── ThemeToggle.tsx
+        │   ├── modals/       # AddExerciseModal, AddFoodModal
+        │   └── progress/     # CalorieCalculator, CalorieWeekChart, NutritionGoalsForm, WeightTrendChart
+        ├── pages/            # Dashboard, Nutrition, Exercise, Progress, History, Settings
+        ├── utils/            # mifflin.ts (Mifflin-St Jeor TDEE calculator)
+        └── test/             # Vitest setup
 ```
 
 ## Setup & Run
