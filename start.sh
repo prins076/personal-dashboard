@@ -2,6 +2,11 @@
 # Start FastAPI (uvicorn :8000) + Vite (:3000) concurrently. Ctrl-C stops both.
 set -euo pipefail
 
+# Ensure WSL node (via nvm) takes precedence over any Windows node in PATH
+export NVM_DIR="$HOME/.nvm"
+# shellcheck disable=SC1091
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 pids=()
@@ -24,5 +29,7 @@ pids+=($!)
 echo "==> vite on :3000"
 (cd "$ROOT/frontend" && npm run dev -- --host 0.0.0.0) &
 pids+=($!)
+
+(until bash -c 'echo >/dev/tcp/localhost/3000' 2>/dev/null; do sleep 0.5; done && explorer.exe "http://localhost:3000") &
 
 wait
